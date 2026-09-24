@@ -15,6 +15,7 @@ import {
 	EXPRESSIONS,
 	LIVE2D_CHARACTERS,
 	POSE_DESC,
+	RUNTIME_SCRIPTS,
 	type Live2DCharacterKey,
 } from "../scripts/live2d-model-info";
 
@@ -45,6 +46,15 @@ const mainActions = [...ACTION_GROUPS.main];
 const transitionActions = [...ACTION_GROUPS.transition];
 ---
 
+<!--
+	提前开始下载 Live2D 运行时（214 KB / 线上实测 12.1 秒）。
+	不写这段的话，它们要等 JS 跑起来才发起请求 —— 国内访问 GitHub Pages
+	本来就只有 ~10 KB/s，白白多等一次往返。
+	用 as="script" 是和 <script src> 同类的请求，不会造成重复下载。
+	（模型本身（model3.json / moc3 / 贴图）是库自己去 fetch 的，
+	 依赖关系串在一起，预加载容易变双重下载，所以这里只预加载运行时。）
+-->
+{RUNTIME_SCRIPTS.map((src) => <link rel="preload" as="script" href={src} />)}
 <div class="l2d-console" style={themeVars}>
 
 <!-- ══ Live2D 舞台 ══ -->

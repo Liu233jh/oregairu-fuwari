@@ -111,9 +111,21 @@ function loadScript(src: string): Promise<void> {
 async function ensureRuntime(): Promise<void> {
 	const w = window as any;
 	if (w.PIXI?.live2d?.Live2DModel) return;
-	// 顺序不可变：core 必须在 cubism4 之前
-	for (const src of RUNTIME_SCRIPTS) {
-		await loadScript(src);
+	/*
+	 * 顺序不变：core 必须在 cubism4 之前。
+	 * 但 `pixi.min.js` 和 `live2dcubismcore.min.js` **互相独立**，
+	 * 只有 `cubism4.min.js`（pixi-live2d-display 的 cubism4 构建）依赖两者。
+	 * 原来是三个串行 await，在国内访问 GitHub Pages 的实测里花了 12.1 秒；
+	 * 拆成「前两个并行 + 第三个」能省掉其中一次的完整往返。
+	 */
+	if (RUNTIME_SCRIPTS.length === 3) {
+		await Promise.all([loadScript(RUNTIME_SCRIPTS[0]), loadScript(RUNTIME_SCRIPTS[1])]);
+		await loadScript(RUNTIME_SCRIPTS[2]);
+	} else {
+		// 兜底：脚本列表变了就退回串行，保证顺序一定正确
+		for (const src of RUNTIME_SCRIPTS) {
+			await loadScript(src);
+		}
 	}
 	if (!w.PIXI?.live2d) {
 		throw new Error("Live2D 运行时加载后仍未就绪");
