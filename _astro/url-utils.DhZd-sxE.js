@@ -1,0 +1,1 @@
+import"./zh_TW.CQ4vShoR.js";function i(r,o){const e=r.replace(/^\/|\/$/g,"").toLowerCase(),n=o.replace(/^\/|\/$/g,"").toLowerCase();return e===n}function t(...r){return r.join("/").replace(/\/+/g,"/")}function s(r){return a(`/posts/${r}/`)}function a(r){return t("","/oregairu-fuwari/",r)}export{s as g,i as p,a as u};
