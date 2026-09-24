@@ -3,8 +3,8 @@
 	"FileReferences": {
 		"Moc": "iroha_seihuku.moc3",
 		"Textures": [
-			"iroha_seihuku.1024/texture_00.png",
-			"iroha_seihuku.1024/texture_01.png"
+			"iroha_seihuku.1024/texture_00.webp",
+			"iroha_seihuku.1024/texture_01.webp"
 		],
 		"DisplayInfo": "iroha_seihuku.cdi3.json",
 		"Expressions": [

@@ -3,8 +3,8 @@
   "FileReferences": {
     "Moc": "yukino_shihuku.moc3",
     "Textures": [
-      "yukino_shihuku.1024/texture_00.png",
-      "yukino_shihuku.1024/texture_01.png"
+      "yukino_shihuku.1024/texture_00.webp",
+      "yukino_shihuku.1024/texture_01.webp"
     ],
     "DisplayInfo": "yukino_shihuku.cdi3.json",
     "Expressions": [

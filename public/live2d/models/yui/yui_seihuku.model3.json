@@ -3,8 +3,8 @@
 	"FileReferences": {
 		"Moc": "yui_seihuku.moc3",
 		"Textures": [
-			"yui_seihuku.1024/texture_00.png",
-			"yui_seihuku.1024/texture_01.png"
+			"yui_seihuku.1024/texture_00.webp",
+			"yui_seihuku.1024/texture_01.webp"
 		],
 		"DisplayInfo": "yui_seihuku.cdi3.json",
 		"Expressions": [

@@ -527,9 +527,36 @@ async function loadModel(key: string) {
 	const slow = window.setTimeout(() => setHint("模型较大，仍在加载中…"), 3000);
 	const old = model;
 
+	/*
+	 * ⏱ 超时与进度提示
+	 *
+	 * 原来这里是硬编码 30 秒，`Promise.race` 一到点就抛错。在国内访问
+	 * GitHub Pages 的实测里，雪乃模型 8 个请求 / 1.1 MB，最后一张贴图
+	 * 要 48.8 秒才下完（约 10 KB/s）—— **必然超时**，用户看到的就是
+	 * 「模型加载失败 / 加载超时（30 秒）」。
+	 *
+	 * 而且 `Promise.race` 不会取消输掉的那个 promise：超时后
+	 * `Live2DModel.from()` 其实还在后台继续下，但结果没人接手，
+	 * 所以模型永远出不来。
+	 *
+	 * 现在改成：
+	 *   1. 超时放宽到 120 秒（慢网也要让它下完）
+	 *   2. 每 5 秒把「已用多少秒」写进提示，用户能看出在进展而不是卡死
+	 *   3. 两个计时器都在 finally 里清掉
+	 */
+	const LOAD_TIMEOUT_MS = 120_000;
+	const startedAt = Date.now();
+	const tick = window.setInterval(() => {
+		const s = Math.round((Date.now() - startedAt) / 1000);
+		setHint(`模型较大，仍在加载中…（已 ${s} 秒）`);
+	}, 5000);
+
 	try {
 		const timeout = new Promise((_, reject) =>
-			window.setTimeout(() => reject(new Error("加载超时（30 秒）")), 30000),
+			window.setTimeout(
+				() => reject(new Error(`加载超时（${LOAD_TIMEOUT_MS / 1000} 秒）`)),
+				LOAD_TIMEOUT_MS,
+			),
 		);
 
 		const next: any = await Promise.race([
@@ -590,6 +617,7 @@ async function loadModel(key: string) {
 		showError("模型加载失败", `${msg}｜模型地址：${character.models[key]}`);
 	} finally {
 		window.clearTimeout(slow);
+		window.clearInterval(tick);
 	}
 }
 
