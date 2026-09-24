@@ -1,0 +1,340 @@
+---
+/**
+ * 春物主题站 — 自定义样式
+ *
+ * 配色来源：
+ *   蓝 ── 雪乃桌宠 (Yukino桌宠-PC版-0.2.56)   主色 #62b6ff  OKLCH hue 247
+ *   粉 ── DSH 插件 (Sjkhx/yukinoDigital)      主色 #f77fa8  OKLCH hue 360
+ *   紫 ── 桥梁（插件自带 accent #7b6cf6）
+ *
+ * fuwari 的主题色由 --hue 派生；这里把 hue 定为 247（桌宠蓝），
+ * 再用下面的变量注入粉色作为「情感层」强调色。
+ */
+
+const css = `
+:root {
+  /* ═══ 语义色：蓝（信息层） ═══ */
+  --c-blue:        #62b6ff;
+  --c-blue-soft:   #bde0ff;
+  --c-blue-deep:   #3d87cc;
+  --c-blue-tint:   #eff7ff;
+
+  /* ═══ 语义色：粉（情感层，来自 DSH 插件） ═══ */
+  --c-pink:        #f77fa8;
+  --c-pink-dark:   #e2608f;
+  --c-pink-soft:   #fdeef5;
+  --c-pink-bg:     #f3d7e9;
+
+  /* ═══ 桥梁：紫 ═══ */
+  --c-bridge:      #7b6cf6;
+
+  /* ═══ 圆角（桌宠体系） ═══ */
+  --r-sm: 13px;
+  --r-md: 15px;
+  --r-lg: 19px;
+  --r-xl: 25px;
+
+  /* ═══ 动效 ═══ */
+  --t-fast: .16s;
+  --t-base: .2s;
+  --t-slow: .42s;
+
+  /* ═══ 彩色阴影（桌宠精髓：不用黑色阴影） ═══ */
+  --sh-blue: 0 8px 18px rgba(98,182,255,.22);
+  --sh-blue-sm: 0 8px 30px rgba(98,182,255,.05);
+  --sh-pink: 0 8px 24px rgba(247,127,168,.18);
+}
+
+:root.dark {
+  --c-blue:        #7cc4ff;
+  --c-pink:        #ff9dbe;
+  --c-bridge:      #9b8ff8;
+  --c-pink-soft:   #241a20;
+  --c-blue-tint:   #161d26;
+  --c-pink-bg:     #1f1720;
+  --sh-blue: 0 8px 18px rgba(124,196,255,.18);
+  --sh-pink: 0 8px 24px rgba(255,157,190,.14);
+}
+
+/* ══════════════════════════════════════════════
+   语录卡片
+   ══════════════════════════════════════════════ */
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
+}
+
+.quote-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid color-mix(in oklab, var(--c-blue-soft) 60%, transparent);
+  border-radius: var(--r-lg);
+  padding: 1.25rem 1.35rem 1rem;
+  transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+  box-shadow: var(--sh-blue-sm);
+}
+.quote-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--c-blue);
+  box-shadow: var(--sh-blue);
+}
+
+/* 左上角引号装饰 */
+.quote-card::before {
+  content: "「";
+  position: absolute;
+  top: .35rem;
+  left: .6rem;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--c-blue-soft);
+  opacity: .55;
+  pointer-events: none;
+  transition: color var(--t-base);
+}
+.quote-card:hover::before { color: var(--c-blue); }
+
+.quote-card p {
+  margin: 0 0 .85rem;
+  padding-left: .35rem;
+  font-size: .975rem;
+  line-height: 1.85;
+  color: var(--deep-text);
+  letter-spacing: .01em;
+}
+
+.quote-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding-top: .7rem;
+  border-top: 1px dashed color-mix(in oklab, var(--c-blue-soft) 70%, transparent);
+  font-size: .8rem;
+}
+.quote-card .q-char {
+  color: var(--c-blue-deep);
+  font-weight: 600;
+}
+.quote-card .q-meta {
+  color: rgba(0,0,0,.4);
+  font-size: .75rem;
+}
+:root.dark .quote-card .q-meta { color: rgba(255,255,255,.4); }
+
+/* 雪乃的语录：换成粉色（情感层的语义分工） */
+.quote-card[data-char="yukino"] {
+  border-color: color-mix(in oklab, var(--c-pink) 35%, transparent);
+}
+.quote-card[data-char="yukino"]:hover {
+  border-color: var(--c-pink);
+  box-shadow: var(--sh-pink);
+}
+.quote-card[data-char="yukino"]::before { color: color-mix(in oklab, var(--c-pink) 55%, transparent); }
+.quote-card[data-char="yukino"] .q-char { color: var(--c-pink-dark); }
+
+/* ══════════════════════════════════════════════
+   筛选胶囊
+   ══════════════════════════════════════════════ */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+}
+
+.chip {
+  padding: .35rem .95rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  border: 1px solid color-mix(in oklab, var(--c-blue-soft) 70%, transparent);
+  background: transparent;
+  color: rgba(0,0,0,.62);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  white-space: nowrap;
+}
+:root.dark .chip { color: rgba(255,255,255,.62); }
+.chip:hover {
+  border-color: var(--c-blue);
+  color: var(--c-blue-deep);
+  transform: translateY(-1px);
+}
+.chip.active {
+  background: linear-gradient(135deg, var(--c-blue), var(--c-blue-soft));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--sh-blue);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════
+   角色页舞台
+   ══════════════════════════════════════════════ */
+.l2d-stage {
+  position: relative;
+  width: 100%;
+  height: min(72vh, 640px);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: linear-gradient(180deg, #fdeef5 0%, #f9e3ef 45%, #f3d7e9 100%);
+  box-shadow: var(--sh-pink);
+}
+:root.dark .l2d-stage {
+  background: linear-gradient(180deg, #241a20 0%, #1f1720 45%, #1a1419 100%);
+}
+/* 中央柔光（照搬 DSH 插件的 radial-gradient 手法） */
+.l2d-stage::before {
+  content: "";
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  aspect-ratio: 1;
+  max-width: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.75) 0%, rgba(255,255,255,0) 70%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+:root.dark .l2d-stage::before {
+  background: radial-gradient(circle, rgba(255,157,190,.14) 0%, rgba(255,157,190,0) 70%);
+}
+.l2d-stage canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 演出控制面板 */
+.l2d-panel {
+  background: rgba(255,255,255,.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, var(--c-pink) 25%, transparent);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--sh-pink);
+}
+:root.dark .l2d-panel {
+  background: rgba(30,32,39,.78);
+  border-color: color-mix(in oklab, var(--c-pink) 30%, transparent);
+}
+
+.l2d-panel h3 {
+  margin: 0 0 .6rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--c-pink-dark);
+  letter-spacing: .05em;
+}
+
+.pill-btn {
+  padding: .3rem .8rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  border: 1px solid color-mix(in oklab, var(--c-pink) 30%, transparent);
+  background: rgba(255,255,255,.6);
+  color: rgba(0,0,0,.65);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+:root.dark .pill-btn {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7);
+}
+.pill-btn:hover {
+  background: var(--c-pink-soft);
+  border-color: var(--c-pink);
+  transform: translateY(-1px);
+}
+.pill-btn.active {
+  background: linear-gradient(135deg, var(--c-pink), var(--c-pink-dark));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════
+   首页 Hero
+   ══════════════════════════════════════════════ */
+.hero-block {
+  position: relative;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--c-blue) 0%, var(--c-bridge) 50%, var(--c-pink) 100%);
+  color: #fff;
+  box-shadow: var(--sh-blue);
+}
+.hero-block .hero-quote {
+  font-size: clamp(1.1rem, 3.2vw, 1.9rem);
+  font-weight: 600;
+  line-height: 1.7;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 12px rgba(0,0,0,.12);
+}
+.hero-block .hero-sub {
+  margin-top: .9rem;
+  font-size: .85rem;
+  opacity: .9;
+  letter-spacing: .08em;
+}
+
+/* ══════════════════════════════════════════════
+   今日一言
+   ══════════════════════════════════════════════ */
+.daily-quote {
+  position: relative;
+  padding: 1.6rem 1.8rem;
+  border-radius: var(--r-lg);
+  background: var(--c-blue-tint);
+  border-left: 3px solid var(--c-blue);
+}
+:root.dark .daily-quote { background: rgba(98,182,255,.07); }
+.daily-quote .dq-text {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--deep-text);
+  margin: 0 0 .6rem;
+}
+.daily-quote .dq-from {
+  font-size: .8rem;
+  color: var(--c-blue-deep);
+}
+
+/* ══════════════════════════════════════════════
+   动效（克制）
+   ══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-up {
+    animation: fadeUp .45s cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .quote-card { animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both; }
+  .quote-card:nth-child(2) { animation-delay: .04s; }
+  .quote-card:nth-child(3) { animation-delay: .08s; }
+  .quote-card:nth-child(4) { animation-delay: .12s; }
+  .quote-card:nth-child(5) { animation-delay: .16s; }
+  .quote-card:nth-child(6) { animation-delay: .2s; }
+}
+`;
+
+// 移动端：Live2D 降级
+const mobileCss = `
+@media (max-width: 768px) {
+  .l2d-stage { height: 46vh; }
+  .hero-block { padding: 2.2rem 1.2rem; }
+}
+`;
+---
+
+<style is:global set:html={css}></style>
+<style is:global set:html={mobileCss}></style>

@@ -1,0 +1,115 @@
+---
+import { url } from "../utils/url-utils";
+import { getCollection } from "astro:content";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import Live2DConsole from "../components/Live2DConsole.astro";
+import { pickTopQuotes, countQuotes, countStrongQuotes } from "../scripts/quote-pick";
+import { LIVE2D_CHARACTERS } from "../scripts/live2d-model-info";
+
+// 角色印象色（雪乃蓝 / 结衣粉 / 一色黄）注入成 CSS 变量，供头部标签使用
+const chTheme = LIVE2D_CHARACTERS.yukino.theme;
+const charThemeVars = [
+	`--c-char:${chTheme.accent}`,
+	`--c-char-dark:${chTheme.accentDark}`,
+	`--c-char-soft:${chTheme.accentSoft}`,
+].join(";");
+
+const quotes = await getCollection("quotes");
+// 「她说」只放依据最硬的几句（人工核对 > 网络名言集+原著定位 > 萌娘语录段）
+const yukinoQuotes = pickTopQuotes(quotes, "yukino", 6);
+const yukinoTotal = countQuotes(quotes, "yukino");
+// 「她说」只显示达到金句门槛的（人工精选 / 网络核实 / 萌娘语录段）
+const yukinoStrong = countStrongQuotes(quotes, "yukino");
+
+const PROFILE = [
+	["姓名", "雪之下雪乃（雪ノ下 雪乃）"],
+	["罗马音", "Yukinoshita Yukino"],
+	["年级", "总武高中 二年级 J 班"],
+	["社团", "侍奉部（部长）"],
+	["生日", "1 月 3 日"],
+	["家庭成员", "父（县议员）、母、姐（阳乃）"],
+	["居住", "高级公寓独居，养一只猫"],
+	["爱好", "读书、猫、熊猫玩偶 Pan-san"],
+	["性格", "冷静理性 / 毒舌但正直 / 隐性温柔 / 傲娇"],
+];
+---
+
+<MainGridLayout title="雪之下雪乃" description="雪之下雪乃 · Live2D 角色页">
+	<div class="mb-6 flex items-end justify-between flex-wrap gap-3">
+		<div>
+			<h1 class="text-3xl font-bold mb-1">雪之下雪乃</h1>
+			<p class="text-90 text-sm">雪ノ下 雪乃 · Yukinoshita Yukino</p>
+		</div>
+		<div class="flex gap-2 text-xs items-center" style={charThemeVars}>
+			<span class="char-chip">奉仕部</span>
+			<span class="char-chip is-plain">二年级</span>
+			<span class="char-chip is-plain">猫派</span>
+			<a href={url("/yui/")} class="pill-btn char-link no-underline">其他角色 · 由比滨结衣 →</a>
+		</div>
+	</div>
+
+	<Live2DConsole character="yukino" />
+
+	<!-- ══ 资料 ══ -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+		<div class="card-base p-5">
+			<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+				<Icon name="fa6-solid:id-card" class="text-[var(--c-blue)]" /> 角色资料
+			</h2>
+			<dl class="text-sm">
+				{PROFILE.map(([k, v]) => (
+					<div class="flex gap-3 py-2 border-b border-[var(--line-divider)] last:border-0">
+						<dt class="w-20 shrink-0 text-50">{k}</dt>
+						<dd class="flex-1 text-90">{v}</dd>
+					</div>
+				))}
+			</dl>
+		</div>
+
+		<div class="card-base p-5">
+			<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+				<Icon name="fa6-solid:heart" class="text-[var(--c-pink)]" /> 性格分析
+			</h2>
+			<div class="space-y-3 text-sm leading-relaxed text-90">
+				<p><strong class="text-[var(--c-blue-deep)]">冷静理性</strong> —— 任何事先分析逻辑，不靠感情用事。判断事物看事实和论据，不跟风。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">毒舌但正直</strong> —— 对愚蠢和懒惰毫不留情，但说的每句话都是事实，从不说谎。</p>
+				<p><strong class="text-[var(--c-pink-dark)]">隐性温柔</strong> —— 表面冷漠，实际比谁都心软。「我只是觉得这么做是正确的，跟你是谁没有关系。」</p>
+				<p><strong class="text-[var(--c-pink-dark)]">傲娇</strong> —— 被戳穿善意时嘴硬。「别误会了，我可不是为了你才这么做的。」</p>
+				<p><strong class="text-[var(--c-blue-deep)]">对自己严苛</strong> —— 完美主义，追求「正确的」而非「容易的」。</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- ══ 雪乃语录 ══ -->
+	<div class="mb-8">
+		<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+			<Icon name="fa6-solid:quote-left" class="text-[var(--c-pink)]" /> 她说
+			<span class="text-xs font-normal text-50">（{ yukinoQuotes.length > 0 ? `${yukinoQuotes.length} 句金句` : "暂无" } · 库里共 {yukinoTotal} 条）</span>
+			<a href={url("/quotes/?char=yukino")} class="text-xs font-normal link-underline text-50 ml-auto">查看全部 →</a>
+		</h2>
+		<div class="quote-grid">
+			{yukinoQuotes.map((q) => (
+				<blockquote class="quote-card" data-char="yukino">
+					<p>「{q.data.text}」</p>
+					<footer>
+						<span class="q-char">—— 雪之下雪乃</span>
+					</footer>
+				</blockquote>
+			))}
+		</div>
+	</div>
+
+	<div class="text-center text-xs text-50 leading-relaxed pb-4">
+		<p>Live2D 模型来自本地春物角色素材包，仅供个人学习研究使用。</p>
+		<p class="mt-1">渲染：PixiJS 6 + pixi-live2d-display + Live2D Cubism 4 Core</p>
+		<p class="mt-1">参数与动作清单对齐原始 Windows 版桌面程序 · 27 个动作 / 14 个表情 / 3 个姿态</p>
+	</div>
+</MainGridLayout>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Live2D 运行时由 src/scripts/live2d-page.ts 按需动态加载
+     （加载顺序 core → cubism4 在模块内保证）
+     页面逻辑由 src/scripts/page-init.ts 在 swup:page:view 时调用，
+     这样从其他页面软导航进来也能正常初始化，无需 Ctrl+F5
+     ═══════════════════════════════════════════════════════════════ -->

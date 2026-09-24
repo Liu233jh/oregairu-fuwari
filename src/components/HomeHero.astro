@@ -1,0 +1,207 @@
+---
+import { url } from "../utils/url-utils";
+/**
+ * 首页：全屏开屏 + 通栏群像 + 角色入口
+ *
+ * ══ 开屏（完全大图模式，仿 Halfcity 线上站）══
+ *   整屏 16:9 壁纸铺底 → 压暗层 → 樱花 → 居中文字 → 底部渐隐到页面背景色。
+ *   壁纸是 Steam 创意工坊壁纸 3637984291 的 4K 原图（3840×2160）转的 webp。
+ *
+ *   两个位置上的讲究：
+ *   1. `margin-top: calc(-1 * var(--main-panel-top))` —— <main> 是被绝对定位
+ *      撑在 mainPanelTop 处的，开屏要顶到视口最上面（并让导航栏压在大图上），
+ *      就得把自己拉回去。用变量而不是硬编码 5.5rem，免得以后开 banner 时错位。
+ *   2. 横向用 `margin: 0 calc(50% - 50vw)` 通栏 —— 同时 `<main>` 上有
+ *      overflow-hidden（MainGridLayout.astro），只靠负 margin 会直接被裁掉，
+ *      所以还得配合 custom.css 里那条 `main:has(.hero-full){overflow:visible}`。
+ *
+ * ══ 樱花 ══
+ *   26 片，构建期随机定死（手法来自 XinghuisamaBlogs 的 Sakura.tsx）。
+ *   放在开屏内部，所以切到别的页面自然就没了，不用 JS 收拾。
+ *
+ * ══ 群像带 ══
+ *   原作 4279×821 by 伊緒直道，5.217:1 原比例整幅通栏铺开（不裁不拉伸）。
+ *   以前它是 banner，被 65vh + object-cover 裁得只剩中间 ~44%。
+ *
+ * 「角色」卡片由 CHARACTER_CARDS 驱动：page 非空就渲染成可点链接。
+ */
+import { Icon } from "astro-icon/components";
+import { CHARACTER_CARDS, LIVE2D_CHARACTERS } from "../scripts/live2d-model-info";
+
+import heroFull from "../assets/images/hero-full.webp";
+import heroFullSm from "../assets/images/hero-full-sm.webp";
+import wideArt from "../assets/images/wide-art.webp";
+
+const TITLE = "我的青春恋爱物语果然有问题";
+const SUBTITLE = "青春是一场谎言、一种罪恶。";
+
+/** 打字机行：站点招呼语，不是作品台词，所以不署名 */
+const TYPING_LINES = ["ようこそ、春物語録へ。", "どうぞ、ごゆっくりと。"];
+
+const LIVE_COUNT = CHARACTER_CARDS.filter((c) => c.page).length;
+
+/**
+ * 日语轮播（写法参考 Halfcity 的 #banner-subtitle[data-subtitles]）。
+ * 只放能确证出处的原文 —— 日语原文无法离线核对，宁可两句也不凑三句。
+ */
+const JP_LINES = [
+	{ jp: "本物が、欲しい。", note: "—— 比企谷八幡" },
+	{ jp: "やはり俺の青春ラブコメは、まちがっている。", note: "—— 作品全名" },
+];
+
+// 逐字浮现：每个字的 animation-delay 依次 +0.085s
+const TITLE_CHARS = [...TITLE].map((ch, i) => ({
+	ch,
+	delay: (0.45 + i * 0.085).toFixed(2),
+}));
+
+// 樱花：位置/大小/时长/漂移构建期随机。负 delay ⇒ 首屏一进来就是「飘到一半」，
+// 不会所有花瓣齐刷刷从顶上一起掉下来。
+const PETALS = Array.from({ length: 26 }, () => {
+	const size = 7 + Math.random() * 12; // 7~19px
+	const dur = 7 + Math.random() * 8; // 7~15s
+	return {
+		left: (Math.random() * 100).toFixed(2),
+		size: size.toFixed(1),
+		dur: dur.toFixed(1),
+		delay: (-Math.random() * dur).toFixed(1),
+		dx: (Math.random() * 14 - 7).toFixed(1), // 横向漂移 vw
+		rot: (360 + Math.random() * 540).toFixed(0),
+		op: (0.3 + Math.random() * 0.45).toFixed(2),
+	};
+});
+---
+
+<!-- ══════════ 开屏：完全大图 ══════════ -->
+<section class="hero-full">
+	<img
+		class="hero-full-img"
+		src={heroFull.src}
+		srcset={`${heroFullSm.src} 1280w, ${heroFull.src} 2560w`}
+		sizes="100vw"
+		width={heroFull.width}
+		height={heroFull.height}
+		alt="比企谷八幡与雪之下雪乃背靠背，青色天空与樱花枝条"
+		fetchpriority="high"
+		decoding="async"
+	/>
+	<div class="hero-full-dim" aria-hidden="true"></div>
+	<div class="hero-full-sakura" aria-hidden="true">
+		{
+			PETALS.map((p) => (
+				<i
+					class="sakura-petal"
+					style={`left:${p.left}%;width:${p.size}px;height:${p.size}px;--dx:${p.dx}vw;--rot:${p.rot}deg;--op:${p.op};animation-duration:${p.dur}s;animation-delay:${p.delay}s`}
+				/>
+			))
+		}
+	</div>
+
+	<div class="hero-full-copy">
+		<p class="hf-typing" data-hero-typing={JSON.stringify(TYPING_LINES)}>
+			<span class="hf-typing-text"></span><span class="hf-caret" aria-hidden="true"></span>
+		</p>
+		<h1 class="hf-title">
+			{TITLE_CHARS.map((c) => <span class="hf-char" style={`animation-delay:${c.delay}s`}>{c.ch}</span>)}
+		</h1>
+		<p class="hf-sub">{SUBTITLE}</p>
+		<div class="hf-rotator">
+			{
+				JP_LINES.map((l, i) => (
+					<div class="hf-slide" style={`animation-delay:${(2.4 + i * 6).toFixed(1)}s`}>
+						<p class="hf-jp">{l.jp}</p>
+						<p class="hf-jp-note">{l.note}</p>
+					</div>
+				))
+			}
+		</div>
+	</div>
+
+	<!-- 下箭头：点一下平滑滚到下一屏（群像带）。
+	     用 button 而不是 <a href="#..."> —— Swup 会接管站内链接，
+	     hash 链接的行为在不同版本下不一致，直接给按钮更可控。 -->
+	<button type="button" class="hero-full-scroll" data-hero-scroll aria-label="向下滚动">
+		<Icon name="fa6-solid:chevron-down" />
+	</button>
+	<div class="hero-full-fade" aria-hidden="true"></div>
+</section>
+
+<!-- ══════════ 全员群像（通栏，整幅不裁） ══════════ -->
+<section class="wa-band fade-up" id="home-next">
+	<div class="wa-wrap">
+		<!--
+			放大用 Popover API（不用 checkbox + position:fixed 灯箱）：
+			.wa-band 上的 fade-up 会留下 transform: matrix(1,0,0,1,0,0)，
+			而「任何非 none 的 transform 都会成为 fixed 后代的包含块」，
+			灯箱会被锁死在区块里铺不满屏。popover 进 top layer 绕开这个问题，
+			而且 popovertarget 是声明式的，零 JS。
+		-->
+		<button type="button" class="wa-frame" popovertarget="wa-lightbox" aria-label="放大查看全员群像">
+			<img
+				src={wideArt.src}
+				width={wideArt.width}
+				height={wideArt.height}
+				alt="春物全员群像：总武高中众角色横向排开"
+				loading="lazy"
+				decoding="async"
+			/>
+			<span class="wa-hint"><Icon name="fa6-solid:magnifying-glass-plus" /> 点击放大</span>
+		</button>
+		<div id="wa-lightbox" popover="auto" class="wa-lightbox">
+			<img src={wideArt.src} alt="春物全员群像（放大）" />
+			<button
+				type="button"
+				class="wa-close"
+				popovertarget="wa-lightbox"
+				popovertargetaction="hide"
+				aria-label="关闭"
+			>
+				<Icon name="fa6-solid:xmark" />
+			</button>
+		</div>
+	</div>
+</section>
+
+<!-- ══════════ 角色入口 ══════════ -->
+<!--
+	用「紧凑行」而不是大卡片（原来是 emoji + 名字 + 副标题各占一行的大卡）。
+	参考的是站内已有的行范式：侧栏「分类」那条 ButtonLink（h-10 = 40px，
+	名字在左、徽标在右、hover 微移），Halfcity 的侧边菜单也是同样的紧凑行。
+	换成行之后整块从 ~232px 降到 ~96px，且和侧栏的列表看起来是一套东西。
+	三张已接入的用各自印象色，未接入的虚线 + 降透明度。
+-->
+<section class="mb-6">
+	<h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+		<Icon name="fa6-solid:users" class="text-[var(--c-blue)]" /> 角色
+		<span class="text-xs font-normal text-50">（{LIVE_COUNT} 个角色已接入 Live2D）</span>
+	</h2>
+	<div class="char-roster">
+		{
+			CHARACTER_CARDS.map((c) => {
+				// 印象色给两个：亮色版给暗色模式，深色版给浅色模式 ——
+				// 亮色 accent 直接压在白底上只有 ~2.2:1，10.6px 的徽标读不清。
+				const theme = c.key ? LIVE2D_CHARACTERS[c.key].theme : null;
+				const styleVar = theme
+					? `--cr-accent:${theme.accent};--cr-accent-dark:${theme.accentDark}`
+					: undefined;
+				const inner = (
+					<>
+						<span class="char-emoji">{c.emoji}</span>
+						<span class="char-name">{c.name}</span>
+						<span class="char-org">{c.org}</span>
+						<span class="char-badge">{c.page ? "Live2D" : "敬请期待"}</span>
+					</>
+				);
+				return c.page ? (
+					<a href={url(c.page)} class="char-row is-live" style={styleVar} title={`${c.name} · ${c.org} · Live2D`}>
+						{inner}
+					</a>
+				) : (
+					<div class="char-row is-soon" style={styleVar} title={`${c.name} · ${c.org} · 敬请期待`}>
+						{inner}
+					</div>
+				);
+			})
+		}
+	</div>
+</section>

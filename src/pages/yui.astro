@@ -1,0 +1,116 @@
+---
+import { url } from "../utils/url-utils";
+import { getCollection } from "astro:content";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import Live2DConsole from "../components/Live2DConsole.astro";
+import { pickTopQuotes, countQuotes, countStrongQuotes } from "../scripts/quote-pick";
+import { LIVE2D_CHARACTERS } from "../scripts/live2d-model-info";
+
+// 角色印象色（雪乃蓝 / 结衣粉 / 一色黄）注入成 CSS 变量，供头部标签使用
+const chTheme = LIVE2D_CHARACTERS.yui.theme;
+const charThemeVars = [
+	`--c-char:${chTheme.accent}`,
+	`--c-char-dark:${chTheme.accentDark}`,
+	`--c-char-soft:${chTheme.accentSoft}`,
+].join(";");
+
+const quotes = await getCollection("quotes");
+const yuiQuotes = pickTopQuotes(quotes, "yui", 6);
+const yuiTotal = countQuotes(quotes, "yui");
+// 「她说」只显示达到金句门槛的（人工精选 / 网络核实 / 萌娘语录段）
+const yuiStrong = countStrongQuotes(quotes, "yui");
+
+const PROFILE = [
+	["姓名", "由比滨结衣（由比ヶ浜 結衣）"],
+	["罗马音", "Yuigahama Yui"],
+	["年级", "总武高中 二年级 J 班（与八幡同班）"],
+	["社团", "侍奉部"],
+	["生日", "6 月 18 日"],
+	["家庭成员", "父、母（双职工家庭）"],
+	["爱好", "料理、做点心、游戏、打扮、和雪乃一起逛街"],
+	["外号", "由比滨 / 结衣亲（小町这么叫）"],
+	["性格", "温柔开朗 / 擅长读空气 / 习惯性讨好 / 其实很坚强"],
+];
+---
+
+<MainGridLayout title="由比滨结衣" description="由比滨结衣 · Live2D 角色页">
+	<div class="mb-6 flex items-end justify-between flex-wrap gap-3">
+		<div>
+			<h1 class="text-3xl font-bold mb-1">由比滨结衣</h1>
+			<p class="text-90 text-sm">由比ヶ浜 結衣 · Yuigahama Yui</p>
+		</div>
+		<div class="flex gap-2 text-xs items-center" style={charThemeVars}>
+			<span class="char-chip">奉仕部</span>
+			<span class="char-chip is-plain">二年级</span>
+			<span class="char-chip is-plain">和八幡同班</span>
+			<a href={url("/character/")} class="pill-btn char-link no-underline">其他角色 · 雪之下雪乃 →</a>
+		</div>
+	</div>
+
+	<Live2DConsole character="yui" />
+
+	<!-- ══ 资料 ══ -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+		<div class="card-base p-5">
+			<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+				<Icon name="fa6-solid:id-card" class="text-[var(--c-blue)]" /> 角色资料
+			</h2>
+			<dl class="text-sm">
+				{PROFILE.map(([k, v]) => (
+					<div class="flex gap-3 py-2 border-b border-[var(--line-divider)] last:border-0">
+						<dt class="w-20 shrink-0 text-50">{k}</dt>
+						<dd class="flex-1 text-90">{v}</dd>
+					</div>
+				))}
+			</dl>
+		</div>
+
+		<div class="card-base p-5">
+			<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+				<Icon name="fa6-solid:heart" class="text-[var(--c-pink)]" /> 性格分析
+			</h2>
+			<div class="space-y-3 text-sm leading-relaxed text-90">
+				<p><strong class="text-[var(--c-pink-dark)]">读空气的人</strong> —— 全作最会看气氛的角色。别人还没开口，她就已经知道对方想要什么，然后先一步配合上去。</p>
+				<p><strong class="text-[var(--c-pink-dark)]">习惯性讨好</strong> —— 为了不让关系变坏，会把自己的真心往后放。「只要大家开心就好」既是她的温柔，也是她的自我压抑。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">其实很坚强</strong> —— 被拒绝、被误解、被冷落之后，她还是会第二天照常笑着出现。原作的成长线就是她学会「说出自己想要的」。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">料理与点心</strong> —— 侍奉部的常驻投喂担当。做饼干、做饭团，用食物表达那些说不出口的话。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">对雪乃的执着</strong> —— 一开始是仰慕，后来是并肩。她是唯一能把雪乃从「正确」里拽出来的人之一。</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- ══ 结衣语录 ══ -->
+	<div class="mb-8">
+		<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+			<Icon name="fa6-solid:quote-left" class="text-[var(--c-pink)]" /> 她说
+			<span class="text-xs font-normal text-50">（{ yuiQuotes.length > 0 ? `${yuiQuotes.length} 句金句` : "暂无" } · 库里共 {yuiTotal} 条）</span>
+			<a href={url("/quotes/?char=yui")} class="text-xs font-normal link-underline text-50 ml-auto">查看全部 →</a>
+		</h2>
+		{yuiQuotes.length > 0 ? (
+			<div class="quote-grid">
+				{yuiQuotes.map((q) => (
+					<blockquote class="quote-card" data-char="yui">
+						<p>「{q.data.text}」</p>
+						<footer>
+							<span class="q-char">—— 由比滨结衣</span>
+						</footer>
+					</blockquote>
+				))}
+			</div>
+		) : (
+			<p class="text-sm text-50">语录库里还没有归到结衣名下的句子。</p>
+		)}
+	</div>
+
+	<div class="text-center text-xs text-50 leading-relaxed pb-4">
+		<p>Live2D 模型来自本地春物角色素材包，仅供个人学习研究使用。</p>
+		<p class="mt-1">渲染：PixiJS 6 + pixi-live2d-display + Live2D Cubism 4 Core</p>
+		<p class="mt-1">参数与动作清单对齐原始 Windows 版桌面程序 · 27 个动作 / 14 个表情 / 3 个姿态</p>
+	</div>
+</MainGridLayout>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     和雪乃页共用 src/scripts/live2d-page.ts：
+     舞台元素上的 data-character="yui" 决定加载 /live2d/models/yui/
+     ═══════════════════════════════════════════════════════════════ -->

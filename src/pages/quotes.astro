@@ -1,0 +1,194 @@
+---
+import { getCollection } from "astro:content";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+
+const quotes = await getCollection("quotes");
+
+/** 角色 id -> 中文名 */
+const CHAR_NAMES: Record<string, string> = {
+	yukino: "雪之下雪乃",
+	yui: "由比滨结衣",
+	hachiman: "比企谷八幡",
+	iroha: "一色彩羽",
+	totsuka: "户冢彩加",
+	kawasaki: "川崎沙希",
+	ebina: "海老名姬菜",
+	zaimokuza: "材木座义辉",
+	hiratsuka: "平冢静",
+	haruno: "雪之下阳乃",
+	hayama: "叶山隼人",
+	miura: "三浦优美子",
+	komachi: "比企谷小町",
+	unknown: "未识别",
+};
+
+/** 统计角色 */
+const charCount: Record<string, number> = {};
+for (const q of quotes) {
+	const c = q.data.character || "unknown";
+	charCount[c] = (charCount[c] || 0) + 1;
+}
+const chars = Object.entries(charCount)
+	.filter(([c]) => c !== "unknown")
+	.sort((a, b) => b[1] - a[1]);
+
+/** 统计主题 */
+const themeCount: Record<string, number> = {};
+for (const q of quotes) {
+	for (const t of q.data.themes || []) {
+		themeCount[t] = (themeCount[t] || 0) + 1;
+	}
+}
+const themes = Object.entries(themeCount).sort((a, b) => b[1] - a[1]);
+
+/** 卡片数据（由 /quotes-data.json 端点提供，这里只用于统计展示） */
+const featuredCount = quotes.filter((q) => q.data.featured === true).length;
+---
+
+<MainGridLayout title="经典语录" description="春物经典语录">
+	<div class="mb-5">
+		<h1 class="text-3xl font-bold mb-2 flex items-center gap-2">
+			<Icon name="fa6-solid:quote-left" class="text-[var(--c-blue)]" />
+			经典语录
+		</h1>
+		<p class="text-90 text-sm">
+			共 <strong class="text-[var(--c-blue-deep)]">{quotes.length}</strong> 条
+			· 其中精选 <strong class="text-[var(--c-pink-dark)]">{featuredCount}</strong> 条
+		</p>
+	</div>
+
+	<!-- ══ 筛选区 ══ -->
+	<div class="card-base p-4 mb-5 flex flex-col gap-3">
+		<div>
+			<div class="text-xs font-semibold text-50 mb-2 tracking-wider">范围</div>
+			<div class="chip-row" id="scope-filter">
+				<button class="chip active" data-scope="all">全部 <span class="opacity-75">{quotes.length}</span></button>
+				<button class="chip" data-scope="featured">⭐ 精选 <span class="opacity-75">{featuredCount}</span></button>
+			</div>
+		</div>
+
+		<div>
+			<div class="text-xs font-semibold text-50 mb-2 tracking-wider">按角色</div>
+			<div class="chip-row" id="char-filter">
+				<button class="chip active" data-char="all">全部</button>
+				{chars.map(([c, n]) => (
+					<button class="chip" data-char={c}>
+						{CHAR_NAMES[c] || c} <span class="opacity-75">{n}</span>
+					</button>
+				))}
+			</div>
+		</div>
+
+		<div>
+			<div class="text-xs font-semibold text-50 mb-2 tracking-wider">按主题</div>
+			<div class="chip-row" id="theme-filter">
+				<button class="chip active" data-theme="all">全部</button>
+				{themes.map(([t, n]) => (
+					<button class="chip" data-theme={t}>{t} <span class="opacity-75">{n}</span></button>
+				))}
+			</div>
+		</div>
+
+		<div class="flex items-center gap-2 pt-1 border-t border-[var(--line-divider)]">
+			<Icon name="fa6-solid:magnifying-glass" class="text-50 shrink-0" />
+			<input
+				id="q-search"
+				type="search"
+				placeholder="搜索语录内容、角色名…"
+				class="flex-1 bg-transparent outline-none text-sm py-1.5 border-b border-[var(--line-color)] focus:border-[var(--c-blue)] transition"
+				autocomplete="off"
+			/>
+			<button id="q-clear" class="chip hidden" title="清除搜索">✕</button>
+		</div>
+
+		<div id="q-status" class="flex items-center gap-2 flex-wrap text-xs text-50 pt-1">
+			<span id="q-count">—</span>
+			<button id="q-reset" class="chip hidden">重置全部筛选</button>
+		</div>
+	</div>
+
+	<!-- ══ 语录网格（内容由 src/scripts/quotes-page.ts 渲染） ══ -->
+	<div class="quote-grid" id="quote-grid"></div>
+
+	<div id="q-empty" class="hidden text-center py-20 text-50">
+		<Icon name="fa6-solid:face-meh" class="text-4xl mb-3" />
+		<p class="mb-3">没有符合条件的语录</p>
+		<button id="q-empty-reset" class="chip">清除筛选条件</button>
+	</div>
+
+	<nav id="q-pager" class="flex items-center justify-center gap-2 mt-8 mb-4 flex-wrap"></nav>
+
+	<div class="mt-6 text-center text-xs text-50 leading-relaxed pb-4">
+		<p>语录由脚本从原著全文中自动提取，角色归属经启发式识别，可能存在误差。</p>
+		<p class="mt-1">点击卡片上的角色名可筛选该角色的语录 · 筛选条件会同步到网址。</p>
+	</div>
+</MainGridLayout>
+
+<!-- 语录数据走 /quotes-data.json 端点（见 src/pages/quotes-data.json.ts），
+     不放在 DOM 里 —— 因为 Astro 会把 <script> 移出 <main>，
+     而 Swup 软导航只替换 <main>，数据会读不到。
+     渲染逻辑在 src/scripts/quotes-page.ts，由 page-init.ts 调度。 -->
+
+<style>
+	.q-mark {
+		background: color-mix(in oklab, var(--c-blue) 28%, transparent);
+		color: inherit;
+		border-radius: 3px;
+		padding: 0 2px;
+	}
+
+	.quote-card.is-featured {
+		border-color: color-mix(in oklab, var(--c-pink) 45%, transparent);
+		background: linear-gradient(
+			180deg,
+			color-mix(in oklab, var(--c-pink-soft) 55%, var(--card-bg)) 0%,
+			var(--card-bg) 42%
+		);
+	}
+	.quote-card.is-featured:hover {
+		border-color: var(--c-pink);
+		box-shadow: var(--sh-pink);
+	}
+	.quote-card.is-featured .q-char {
+		color: var(--c-pink-dark);
+	}
+
+	.q-badge {
+		position: absolute;
+		top: 0.6rem;
+		right: 0.7rem;
+		font-size: 0.62rem;
+		letter-spacing: 0.06em;
+		padding: 0.1rem 0.45rem;
+		border-radius: 999px;
+		background: linear-gradient(135deg, var(--c-pink), var(--c-pink-dark));
+		color: #fff;
+		font-weight: 600;
+		line-height: 1.6;
+	}
+
+	.q-char-btn {
+		background: none;
+		border: 0;
+		padding: 0;
+		cursor: pointer;
+		font: inherit;
+		transition: opacity 0.16s;
+	}
+	.q-char-btn:hover {
+		opacity: 0.7;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	#q-pager .chip[disabled] {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+	#q-pager .chip[disabled]:hover {
+		transform: none;
+		border-color: color-mix(in oklab, var(--c-blue-soft) 70%, transparent);
+		color: rgba(0, 0, 0, 0.62);
+	}
+</style>

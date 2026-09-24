@@ -1,0 +1,1127 @@
+/**
+ * 春物主题站 — 自定义样式
+ *
+ * 配色来源：
+ *   蓝 ── 雪乃桌宠 (Yukino桌宠-PC版-0.2.56)   主色 #62b6ff  OKLCH hue 247
+ *   粉 ── DSH 插件 (Sjkhx/yukinoDigital)      主色 #f77fa8  OKLCH hue 360
+ *   紫 ── 桥梁（插件自带 accent #7b6cf6, hue 284）
+ *
+ * 分工原则：粉和蓝不在同一视觉区域竞争
+ *   博客 / 语录  → 只有蓝
+ *   角色页       → 只有粉
+ *   首页 Hero    → 蓝→紫→粉 渐变（全站唯一三色同现处）
+ */
+
+:root {
+  /* ═══ 蓝（信息层，来自桌宠） ═══ */
+  --c-blue:        #62b6ff;
+  --c-blue-soft:   #bde0ff;
+  --c-blue-deep:   #3d87cc;
+  --c-blue-tint:   #eff7ff;
+
+  /* ═══ 粉（情感层，来自 DSH 插件） ═══ */
+  --c-pink:        #f77fa8;
+  --c-pink-dark:   #e2608f;
+  --c-pink-soft:   #fdeef5;
+  --c-pink-bg:     #f3d7e9;
+
+  /* ═══ 紫（桥梁） ═══ */
+  --c-bridge:      #7b6cf6;
+
+  /* ═══ 圆角（桌宠体系） ═══ */
+  --r-sm: 13px;
+  --r-md: 15px;
+  --r-lg: 19px;
+  --r-xl: 25px;
+
+  /* ═══ 动效 ═══ */
+  --t-fast: .16s;
+  --t-base: .2s;
+  --t-slow: .42s;
+
+  /* ═══ 彩色阴影（桌宠精髓：不用黑色阴影） ═══ */
+  --sh-blue: 0 8px 18px rgba(98,182,255,.22);
+  --sh-blue-sm: 0 8px 30px rgba(98,182,255,.05);
+  --sh-pink: 0 8px 24px rgba(247,127,168,.18);
+}
+
+:root.dark {
+  --c-blue:        #7cc4ff;
+  --c-pink:        #ff9dbe;
+  --c-bridge:      #9b8ff8;
+  --c-pink-soft:   #241a20;
+  --c-blue-tint:   #161d26;
+  --c-pink-bg:     #1f1720;
+  --sh-blue: 0 8px 18px rgba(124,196,255,.18);
+  --sh-pink: 0 8px 24px rgba(255,157,190,.14);
+
+  /* ── 补 fuwari 的漏 ──
+     fuwari 的 variables.styl 用「两段值」表示浅色/深色：
+       :root        { {key}: value[0] }
+       :root.dark   { if length(value) > 1 { {key}: value[1] } }
+     也就是说**只写了一段值的变量，在暗色下原封不动**。下面这个正是如此：
+       --c-blue-deep #3d87cc → 暗底上偏灰，做强调色不够亮
+     这里补上暗色值。
+
+     ⚠️ 别顺手把 --deep-text 也改成亮色！
+        它只有一段也是事实，但它的语义是「**深色**文字」—— 是给浅底用的。
+        fuwari 的 ButtonLink 徽标正是 `dark:text-[var(--deep-text)]`
+        + `dark:bg-[var(--primary)]`（--primary 在暗色下是亮蓝），
+        靠的就是「深字压亮底」。我一改亮，那些徽标立刻掉到 1.64:1。
+        真正该改的是「用错了变量」的地方 —— 见下面 .quote-card p。 */
+  --c-blue-deep:   #6fb4e8;
+
+  /* 全站基准文字色，说明见下方 body 那条 */
+  --base-text:     oklch(0.92 0.012 var(--hue));
+}
+
+/* ══════════════════════════════════════════════
+   全站基准文字色（暗色可读性的根因修复）
+   ── 问题：fuwari 从不给 <body> 设文字色，全靠每个元素自己写
+      `dark:text-*`。实测暗色下 body 的 color 就是初始值 **rgb(0,0,0)** ——
+      于是任何「忘了写颜色类」的元素在暗色下都是黑字压暗底。
+      首页的 h2「角色」、角色行的名字与 org、侧栏卡片正文、.quote-card 正文
+      都中过招（审计里 h2 只有 1.08:1）。
+   ── 修法：给一个随主题切换的基准色。显式写了 `dark:text-*` 的元素照旧覆盖它，
+      所以这是一层兜底，既修现有问题，也免得以后新写的地方再漏。
+   ══════════════════════════════════════════════ */
+:root {
+  --base-text: oklch(0.28 0.02 var(--hue));
+}
+
+body {
+  color: var(--base-text);
+}
+
+/* ══════════════════════════════════════════════
+   弱化文字令牌的对比度上调（主要是暗色侧）
+   ── fuwari 在 main.css 里定义了 .text-75/.text-50/.text-30/.text-25，
+      暗色侧取的是 white/50、/30、/25。本站 `--page-bg` 是 oklch(0.16)，
+      比 fuwari 设想的深色底更暗，于是实测：
+        .text-50 → 约 4.0:1（勉强）
+        .text-30 → 2.7:1（「1150 字 | 6 分钟」这类真信息看不清）
+        .text-25 → 2.2:1
+      这里把暗色侧提到 58%~65%，实测全部过 4.5:1。浅色侧也一并提到 45%~55%。
+
+   ── ⚠️ 为什么要写成 `:root .text-30` 这种多一层选择器，而不是直接 `.text-30`：
+      Tailwind v3 的 `@layer components` **不是原生 CSS @layer**，它会被展开成
+      普通规则。所以 main.css 里的 `.text-30` 和这里的 `.text-30` 是**同优先级**，
+      谁生效只取决于打包后两个 CSS 文件谁在后面 —— 实测第一次写成 `.text-30`
+      就完全没生效（产物里还是 `color:#0000004d`）。
+      多带一层 `:root` 把优先级提到 (0,2,0)，就不再受文件顺序影响。
+
+   ── ⚠️ 为什么不直接改 main.css 里那几行：
+      早前改它会伴随 `pnpm build` 报
+        markdown.css:23 The `link` class does not exist
+      那个偶发失败其实是 markdown.css 里 `@apply link` 的跨文件依赖造成的
+      （已就地展开修掉），但既然 custom.css 能安全覆盖，就不去动 main.css 了。
+   ══════════════════════════════════════════════ */
+:root .text-50 {
+  color: rgba(0, 0, 0, .55);
+}
+
+:root .text-30 {
+  color: rgba(0, 0, 0, .45);
+}
+
+:root .text-25 {
+  color: rgba(0, 0, 0, .45);
+}
+
+:root.dark .text-50 {
+  color: rgba(255, 255, 255, .65);
+}
+
+:root.dark .text-30 {
+  color: rgba(255, 255, 255, .60);
+}
+
+:root.dark .text-25 {
+  color: rgba(255, 255, 255, .58);
+}
+
+/* ══════════════════════════════════════════════
+   语录卡片
+   ══════════════════════════════════════════════ */
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
+}
+
+.quote-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid color-mix(in oklab, var(--c-blue-soft) 60%, transparent);
+  border-radius: var(--r-lg);
+  padding: 1.25rem 1.35rem 1rem;
+  transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+  box-shadow: var(--sh-blue-sm);
+  margin: 0;
+}
+
+.quote-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--c-blue);
+  box-shadow: var(--sh-blue);
+}
+
+.quote-card p {
+  margin: 0 0 .85rem;
+  font-size: .975rem;
+  line-height: 1.85;
+  /* 原来写的是 var(--deep-text)。那是个「浅底专用」的深色变量，
+     在暗色下不会被覆盖 → 黑字压黑卡（实测 1.1:1）。
+     改用随主题切换的 --base-text。 */
+  color: var(--base-text);
+  letter-spacing: .01em;
+}
+
+.quote-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding-top: .7rem;
+  border-top: 1px dashed color-mix(in oklab, var(--c-blue-soft) 70%, transparent);
+  font-size: .8rem;
+}
+
+.quote-card .q-char {
+  color: var(--c-blue-deep);
+  font-weight: 600;
+}
+
+.quote-card .q-meta {
+  color: rgba(0, 0, 0, .4);
+  font-size: .75rem;
+}
+
+:root.dark .quote-card .q-meta {
+  /* 原 .4 在暗底上只有 3.78:1（实测），提到 .62 过 4.5:1 */
+  color: rgba(255, 255, 255, .62);
+}
+
+/* 雪乃的语录 → 换成粉色（语义分工） */
+.quote-card[data-char="yukino"] {
+  border-color: color-mix(in oklab, var(--c-pink) 35%, transparent);
+}
+.quote-card[data-char="yukino"]:hover {
+  border-color: var(--c-pink);
+  box-shadow: var(--sh-pink);
+}
+.quote-card[data-char="yukino"] .q-char {
+  color: var(--c-pink-dark);
+}
+
+/* ══════════════════════════════════════════════
+   筛选胶囊
+   ══════════════════════════════════════════════ */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+}
+
+.chip {
+  display: inline-block;
+  padding: .35rem .95rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  line-height: 1.5;
+  border: 1px solid color-mix(in oklab, var(--c-blue-soft) 70%, transparent);
+  background: transparent;
+  color: rgba(0, 0, 0, .62);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  white-space: nowrap;
+}
+
+:root.dark .chip {
+  color: rgba(255, 255, 255, .62);
+}
+
+.chip:hover {
+  border-color: var(--c-blue);
+  color: var(--c-blue-deep);
+  transform: translateY(-1px);
+}
+
+.chip.active {
+  background: linear-gradient(135deg, var(--c-blue), var(--c-blue-soft));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--sh-blue);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════
+   角色页 Live2D 舞台
+
+   三个角色的印象色由 Live2DConsole.astro 注入到 .l2d-console 上的
+   --c-char / --stage-* 变量里（雪乃蓝 / 结衣粉 / 一色黄），
+   下面一律走变量，不再写死粉色。
+   ══════════════════════════════════════════════ */
+
+/* 舞台高度：比画布的「缩放基准高度」矮，
+   多出来的部分由 canvas 承担并被 overflow 裁掉 ——
+   这样下面的卡片能露出来一截，但人物大小完全不变（见 live2d-page.ts 的 REF_STAGE_H）。 */
+.l2d-stage {
+  position: relative;
+  width: 100%;
+  height: min(50vh, 430px);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--stage-from) 0%, var(--stage-mid) 45%, var(--stage-to) 100%);
+  box-shadow: 0 10px 30px -12px color-mix(in oklab, var(--c-char) 45%, transparent);
+}
+
+:root.dark .l2d-stage {
+  background: linear-gradient(180deg, var(--stage-dark-from) 0%, var(--stage-dark-from) 45%, var(--stage-dark-to) 100%);
+}
+
+/* 中央柔光（照搬 DSH 插件手法） */
+.l2d-stage::before {
+  content: "";
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  aspect-ratio: 1;
+  max-width: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.75) 0%, rgba(255,255,255,0) 70%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+:root.dark .l2d-stage::before {
+  background: radial-gradient(circle, var(--stage-glow) 0%, transparent 70%);
+}
+
+.l2d-stage canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 演出控制面板 */
+.l2d-panel {
+  background: rgba(255, 255, 255, .78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, var(--c-char, var(--c-pink)) 25%, transparent);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.1rem;
+  box-shadow: 0 8px 24px -14px color-mix(in oklab, var(--c-char, var(--c-pink)) 55%, transparent);
+}
+
+:root.dark .l2d-panel {
+  background: rgba(30, 32, 39, .78);
+  border-color: color-mix(in oklab, var(--c-char, var(--c-pink)) 30%, transparent);
+}
+
+.l2d-panel h3 {
+  margin: 0 0 .6rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--c-char-dark, var(--c-pink-dark));
+  letter-spacing: .05em;
+}
+
+/* 暗色下 --c-char-dark 这类「深色版印象色」太暗（雪乃 #2b7fd0 在深面板上
+   只有 4.11:1，套在它里面的 opacity-70 小字更是只剩 2.67:1）。
+   改用「印象色 + 白」提亮。 */
+:root.dark .l2d-panel h3 {
+  color: color-mix(in oklab, var(--c-char, var(--c-pink)) 82%, white);
+}
+
+.pill-btn {
+  padding: .3rem .8rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  border: 1px solid color-mix(in oklab, var(--c-char, var(--c-pink)) 32%, transparent);
+  background: rgba(255, 255, 255, .6);
+  color: rgba(0, 0, 0, .65);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+:root.dark .pill-btn {
+  background: rgba(255, 255, 255, .06);
+  color: rgba(255, 255, 255, .7);
+}
+
+.pill-btn:not(:disabled):hover {
+  background: var(--c-char-soft, var(--c-pink-soft));
+  border-color: var(--c-char, var(--c-pink));
+  transform: translateY(-1px);
+}
+
+/* 姿态过渡按钮在起始姿态不匹配时禁用。
+   WCAG 把「不可用的控件」排除在对比度要求之外，所以这里不算硬性达标项；
+   但原值 .34 连「看得出有个按钮」都勉强（暗色下实测 2.18:1），
+   提到 .5 —— 仍然一眼可辨是禁用态，但至少读得出是什么。 */
+.pill-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.pill-btn.active {
+  background: linear-gradient(135deg, var(--c-char, var(--c-pink)), var(--c-char-dark, var(--c-pink-dark)));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════
+   角色页头部标签（奉仕部 / 二年级 / …）与互跳按钮
+   颜色走角色印象色（雪乃蓝 / 结衣粉 / 一色黄）
+   ══════════════════════════════════════════════ */
+.char-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .25rem .7rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--c-char-dark);
+  background: var(--c-char-soft);
+  border: 1px solid color-mix(in oklab, var(--c-char) 38%, transparent);
+}
+
+.char-chip.is-plain {
+  color: color-mix(in oklab, var(--c-char-dark) 76%, transparent);
+  background: transparent;
+  font-weight: 500;
+}
+
+/* 暗色下角色页的标签也得跟着提亮：
+   .char-chip 用的是「深色版印象色」，在深底上只有 3.7:1；
+   .is-plain 又叠了 76% 透明度，只剩 3.19:1。 */
+:root.dark .char-chip {
+  color: color-mix(in oklab, var(--c-char, var(--c-pink)) 86%, white);
+  background: color-mix(in oklab, var(--c-char, var(--c-pink)) 18%, transparent);
+}
+
+:root.dark .char-chip.is-plain {
+  color: color-mix(in oklab, var(--c-char, var(--c-pink)) 78%, white);
+  background: transparent;
+}
+
+/* 角色互跳按钮 */
+.pill-btn.char-link {
+  color: var(--c-char-dark);
+  border-color: color-mix(in oklab, var(--c-char) 45%, transparent);
+}
+
+:root.dark .pill-btn.char-link {
+  color: color-mix(in oklab, var(--c-char) 85%, white);
+}
+
+/* ══════════════════════════════════════════════
+   首页「角色」入口：紧凑行
+   ── 原来是大卡片（emoji / 名字 / 副标题各占一行 + p-4），六张铺满 232px 高，
+      比上面那条 12 人的群像带（287px）还占地方，观感很重。
+   ── 改成行之后跟着站内已有的行范式走：侧栏「分类」那条 ButtonLink 是
+      h-10（40px）、名字在左徽标在右、hover 微移；Halfcity 的侧边菜单同理。
+      这里高度取 2.75rem（44px，留一点余量给 emoji 方块），
+      3 列 × 2 行 = 96px，比原来矮 58%。
+   ══════════════════════════════════════════════ */
+.char-roster {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5rem;
+}
+
+/* 窄屏放两列，并把 org 收起来 —— 不然每个格子只剩 ~200px，会挤成一团 */
+@media (max-width: 640px) {
+  .char-roster {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .char-row .char-org {
+    display: none;
+  }
+}
+
+.char-row {
+  /* 未接入的角色没有印象色，退回全站主蓝 */
+  --cr-accent: var(--c-blue);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-width: 0;
+  height: 2.75rem;
+  padding: 0 .7rem;
+  border-radius: .7rem;
+  border: 1px solid var(--line-color);
+  background: var(--card-bg);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.char-row.is-live:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--cr-accent) 60%, transparent);
+  background: color-mix(in oklab, var(--cr-accent) 8%, var(--card-bg));
+}
+
+/* 未接入：虚线 + 弱化，但**不要靠给整行降 opacity** ——
+   那会把行内文字一起乘掉：0.55(行) × 0.55(org) = 有效 0.3，
+   暗色下实测只剩 2.42:1。改成分开弱化非文字部分。 */
+.char-row.is-soon {
+  border-style: dashed;
+  background: color-mix(in oklab, var(--card-bg) 60%, transparent);
+}
+
+.char-row.is-soon .char-emoji {
+  opacity: .7;
+}
+
+.char-row.is-soon .char-name {
+  font-weight: 500;
+  opacity: .85;
+}
+
+.char-emoji {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: .85rem;
+  line-height: 1;
+  border-radius: .5rem;
+  background: color-mix(in oklab, var(--cr-accent) 16%, transparent);
+}
+
+.char-name {
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* org 是次要信息：空间不够时优先让它截断，不挤名字。
+   opacity 不能再低了 —— 0.55 时暗色下约 3:1，0.7 才稳过 4.5:1。 */
+.char-org {
+  font-size: .7rem;
+  opacity: .7;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.char-badge {
+  flex: none;
+  margin-left: auto;
+  padding: .12rem .42rem;
+  font-size: .66rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  border-radius: 999px;
+  /* 浅色下必须用「深色版印象色」再压暗一档：亮色 accent（如雪乃 #62b6ff）
+     直接压在白底上只有 2.2:1，10.6px 的徽标根本读不清（实测 1.58:1）。 */
+  color: color-mix(in oklab, var(--cr-accent-dark, var(--cr-accent)) 72%, black);
+  background: color-mix(in oklab, var(--cr-accent) 14%, transparent);
+}
+
+/* 暗色下反过来用亮色版 */
+:root.dark .char-badge {
+  color: var(--cr-accent);
+}
+
+.char-row.is-soon .char-badge {
+  color: inherit;
+  background: color-mix(in oklab, currentColor 10%, transparent);
+}
+
+/* ══════════════════════════════════════════════
+   侧栏卡片「更多 / 收起」切换
+   ── 原来的实现点开后把按钮 hidden 掉，只能展开没法收起。
+      现在按钮常驻，靠 host 上的 .is-expanded 换标签文字。
+   ── 用 CSS 换文字而不是 JS 改 textContent：JS 万一没跑，
+      至少还停在「更多」这个正确初值上。
+   ══════════════════════════════════════════════ */
+widget-layout .expand-label-collapse {
+  display: none;
+}
+
+widget-layout.is-expanded .expand-label-expand {
+  display: none;
+}
+
+widget-layout.is-expanded .expand-label-collapse {
+  display: inline;
+}
+
+/* 展开后图标转 90°：more-horiz（…）转成竖直三点，暗示「收起」 */
+widget-layout .expand-icon {
+  transition: transform .25s ease;
+}
+
+widget-layout.is-expanded .expand-icon {
+  transform: rotate(90deg);
+}
+
+/* ══════════════════════════════════════════════
+   导航栏：毛玻璃
+   ── fuwari 的 card-base 给的是不透明底色，这里换成半透明 + backdrop-filter。
+      导航栏底下经常是全屏大图（首页），模糊半径给足（14px）才压得住杂乱；
+      小半径会让底下的图透成一片噪点，字反而更难读。
+   ══════════════════════════════════════════════ */
+#navbar .card-base {
+  background: color-mix(in oklab, var(--card-bg) 58%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  border-color: color-mix(in oklab, var(--line-color) 45%, transparent);
+  border-bottom-color: color-mix(in oklab, var(--line-color) 72%, transparent);
+}
+
+/* 导航栏上方那条是给 onload 动画用的填充条，不同步改的话
+   滚动到顶部时会露出一截不透明的实心色块 */
+#navbar > div:first-child {
+  background: color-mix(in oklab, var(--card-bg) 58%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+/* ══════════════════════════════════════════════
+   首页开屏：完全大图模式
+   ── 整屏 16:9 壁纸铺底 → 压暗层 → 樱花 → 居中文字 → 底部渐隐到页面背景色。
+
+   ── 通栏怎么做（踩过的坑写在下面）：
+      第一版用经典的 `margin-left: calc(50% - 50vw)`，结果宽度对了但整体右偏
+      148px，还撑出横向滚动条。原因是 `<main>` 只是 `#main-grid` 两列布局
+      （17.5rem 侧边栏 + 主列）的右列，「包含块」根本不在视口中间 ——
+      那条公式只在包含块居中时成立。
+      硬修就得写死侧边栏宽度/间距/内边距，跟 fuwari 的布局实现绑死。
+
+      现在改成：JS 量出 <main> 到视口左右边的距离，写进 --bleed-left /
+      --bleed-right（见 scripts/page-bleed.ts），CSS 只管用负 margin 撑出去。
+      JS 没跑之前退化成「和正文同宽」，只是窄一点，不会错位。
+
+   ── 还有一条 overflow 要处理：
+      `<main id="swup-container">` 在 MainGridLayout.astro 里带着 overflow-hidden，
+     会把这个撑出去的块直接裁掉，所以下面用 :has() 只在「这一页有通栏块」时
+      把裁剪放开 —— 不动 fuwari 的 banner 机制，也不影响其它页面。
+   ══════════════════════════════════════════════ */
+main#swup-container:has(.hero-full),
+main#swup-container:has(.wa-band) {
+  overflow: visible;
+}
+
+/* ── 首页：侧栏整体下移到开屏 + 群像带下面 ──
+   开屏是通栏全屏的，而 SideBar 在 DOM 里排在 <main> 前面、两者都没定位 ——
+   默认绘制顺序下开屏会把侧栏（含那张雪乃头像卡）整个盖住。
+   试过把侧栏 z-index 提到开屏之上，结果是它挡在大图上、还逼得标题右偏让位，
+   不是想要的效果。改成把它挪到「点箭头跳转到的位置」：
+   --home-lead 由 page-bleed.ts 实测（= 群像带底边到 main 顶边的距离），
+   加在 #sidebar-profile 而不是 #sidebar 上 ——
+   加在 #sidebar 会撑高网格行把页面拉长，加在头部这一层则不改变
+   #sidebar 的 stretch 高度，#sidebar-sticky 的吸顶行程也不受影响。 */
+/* ⚠️ 只在 lg 断点以上生效：窄屏下 SideBar 是 row-start-2，
+   本来就排在 main 之后（已经在开屏和群像带下面了），
+   再叠一次 --home-lead 会凭空多出一大段空白。
+   1024px 对齐 fuwari 自己用的 lg: 前缀。 */
+@media (min-width: 1024px) {
+  #main-grid:has(.hero-full) #sidebar-profile {
+    margin-top: var(--home-lead, 0px);
+  }
+}
+
+.hero-full {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  /* 顶到视口最上面：<main> 被撑在 --main-panel-top 处，
+     不拉回来开屏就从导航栏下面开始，大图也压不到导航栏底下。
+     通栏则靠 --bleed-* 两个实测变量。 */
+  margin-top: calc(-1 * var(--main-panel-top, 5.5rem));
+  margin-left: calc(-1 * var(--bleed-left, 0px));
+  margin-right: calc(-1 * var(--bleed-right, 0px));
+  height: 100vh;
+  height: 100svh;        /* svh：移动端地址栏收起/展开时不跳 */
+  background: #06303f;
+
+  /* 日文专用字体栈。
+     不指定的话日文会落到中文回退字体上，假名和汉字（直/骨/今 这类）
+     会拿到中文字形 —— 从 Halfcity 线上站用的 --font-zen-maru-gothic 想到的。
+     不引外链字体（纯本地站），用 Windows 自带的 Yu Gothic。 */
+  --font-jp: "Yu Gothic UI", "Yu Gothic", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Meiryo", "MS PGothic", sans-serif;
+}
+
+.hero-full-img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 人物在画面中部偏上，竖屏裁切时优先保头，不要用 center */
+  object-position: 50% 38%;
+}
+
+/* 压暗层：白字落在画面任何区域都要能读 */
+.hero-full-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(120% 78% at 50% 44%, rgba(4, 22, 34, .10) 0%, rgba(4, 22, 34, .60) 100%),
+    linear-gradient(to bottom, rgba(4, 22, 34, .52) 0%, transparent 26%);
+}
+
+/* 底部渐隐到**页面背景色**（Halfcity 的 .wallpaper-gradient 手法）：
+   比渐隐到纯黑自然，大图和下面的内容之间不会留一条硬边。
+   ⚠️ 高度只给 10% 且 z-index 压到文字层【下面】—— 文字现在是压底的，
+      渐隐盖在文字上会把它洗掉（浅色模式下尤其明显）。 */
+.hero-full-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: 10%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--page-bg, #0b0f14));
+}
+
+.hero-full-sakura {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 花瓣：border-radius:100% 0 100% 0 → 樱花那种一头尖一头圆的轮廓 */
+.sakura-petal {
+  position: absolute;
+  top: -14%;
+  display: block;
+  border-radius: 100% 0 100% 0;
+  background: linear-gradient(135deg, #ffe6f1 0%, #ffb4d2 55%, #ff8fbb 100%);
+  box-shadow: 0 0 6px rgba(255, 150, 190, .5);
+  will-change: top, transform, opacity;
+}
+
+/* 文字层：整体压到下半部。
+   ── 为什么不再居中：
+      Halfcity 是居中，但它那张图人物偏上；这张 4K 壁纸两个人正好在画面正中，
+      文字居中会正好糊住两张脸。改成压底之后上半部完全通透，
+      人物、樱花枝条、天空都露出来。
+   ── 压暗只做下半部：上半部不加任何遮罩，「不把背景完全压住」。
+   ── 画面正中就是两个人，所以文字必须水平居中才对称；
+      侧栏已经挪到开屏下面去了，这里不需要再为它让位。 */
+.hero-full-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4.5rem 1.5rem 15vh;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(to top,
+      rgba(4, 22, 34, .80) 0%,
+      rgba(4, 22, 34, .56) 18%,
+      rgba(4, 22, 34, .18) 44%,
+      transparent 66%);
+}
+
+/* ── 打字机行 ──
+   内容是站点招呼语，不是作品台词，所以不署名。 */
+.hf-typing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.6em;
+  margin: 0 0 1.15rem;
+  font-family: var(--font-jp);
+  font-size: clamp(.76rem, 1.9vw, 1rem);
+  letter-spacing: .18em;
+  color: rgba(255, 255, 255, .84);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .6);
+}
+
+.hf-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: .18em;
+  background: currentColor;
+}
+
+.hf-title {
+  margin: 0;
+  /* 略微透一点，让底下的画面透出来一些 —— 但不是靠降透明度来「不压住背景」，
+     主要靠整体压到下半部；透明度降太多字会糊在杂色上。 */
+  color: rgba(255, 255, 255, .9);
+  font-size: clamp(1.5rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: .04em;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, .62);
+}
+
+.hf-sub {
+  margin: 1rem 0 0;
+  font-size: clamp(.82rem, 2.1vw, 1.05rem);
+  letter-spacing: .07em;
+  color: rgba(255, 255, 255, .86);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .55);
+}
+
+/* ── 日语轮播 ──
+   grid 叠格：所有 slide 占同一格，容器高度取最高那个，
+   切换时不会把上面的内容顶来顶去。 */
+.hf-rotator {
+  display: grid;
+  margin-top: 1.5rem;
+}
+
+.hf-slide {
+  grid-area: 1 / 1;
+  opacity: 0;
+}
+
+.hf-jp {
+  margin: 0;
+  font-family: var(--font-jp);
+  font-size: clamp(1rem, 2.6vw, 1.32rem);
+  font-weight: 700;
+  letter-spacing: .1em;
+  background: linear-gradient(100deg, #9fd8ff 0%, #ffffff 38%, #ffc3dd 72%, #9fd8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 兜底：万一浏览器不支持 background-clip:text，渐变字会整块消失 */
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .hf-jp {
+    background: none;
+    color: #fff;
+  }
+}
+
+.hf-jp-note {
+  margin: .45rem 0 0;
+  font-size: .74rem;
+  letter-spacing: .08em;
+  color: rgba(255, 255, 255, .72);
+}
+
+/* 底部居中的下箭头：**可点击**，点一下滚到下一屏（群像带）。
+   做成磨砂圆钮，底下可能是大图的任何区域，浅色/深色模式都要看得清。 */
+.hero-full-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: 2.2rem;
+  z-index: 5;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin: 0;
+  padding: 0;
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .38);
+  border-radius: 999px;
+  background: rgba(10, 28, 40, .42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.hero-full-scroll:hover {
+  background: rgba(10, 28, 40, .66);
+  border-color: rgba(255, 255, 255, .66);
+}
+
+.hero-full-scroll:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, .85);
+  outline-offset: 3px;
+}
+
+/* ── 动效 ──
+   初值（opacity:0 等）刻意也写在这个 media 里：
+   否则开了「减少动态效果」的用户，文字会永远停在不可见状态。 */
+@media (prefers-reduced-motion: no-preference) {
+  .sakura-petal {
+    animation-name: sakura-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes sakura-fall {
+    0%   { top: -14%; transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+    8%   { opacity: var(--op, .6); }
+    85%  { opacity: var(--op, .6); }
+    100% { top: 110%; transform: translate3d(var(--dx, 0), 0, 0) rotate(var(--rot, 540deg)); opacity: 0; }
+  }
+
+  /* 逐字浮现：每个 span 的 delay 由组件在构建期内联写死 */
+  .hf-char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(.55em) rotateX(-55deg);
+    animation: hfCharIn .72s cubic-bezier(.22, 1, .36, 1) forwards;
+  }
+
+  @keyframes hfCharIn {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* 弹性滑入：回弹感来自 cubic-bezier 第三段过冲 */
+  .hf-sub {
+    opacity: 0;
+    transform: translateX(-46px);
+    animation: hfSlideIn 1.5s cubic-bezier(.68, -.55, .265, 1.55) 1.15s forwards;
+  }
+
+  @keyframes hfSlideIn {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* 打字机光标：1s 方波闪烁 */
+  .hf-caret {
+    animation: hfCaret 1s step-end infinite;
+  }
+
+  @keyframes hfCaret {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0; }
+  }
+
+  /* 日语轮播：12s 一轮，0→6% 淡入、6→44% 停留、44→50% 淡出。
+     slide 0 延迟 2.4s（等标题打完字），slide 1 再晚 6s —— 刚好半轮，
+     所以 A 淡出到底的那一刻 B 开始淡入，中间不出现两句同时可见的鬼影。 */
+  .hf-slide {
+    animation: hfRotate 12s ease-in-out infinite both;
+  }
+
+  @keyframes hfRotate {
+    0%   { opacity: 0; transform: translateY(9px); }
+    6%   { opacity: 1; transform: none; }
+    44%  { opacity: 1; transform: none; }
+    50%  { opacity: 0; transform: translateY(-9px); }
+    100% { opacity: 0; transform: translateY(-9px); }
+  }
+
+  .hero-full-scroll {
+    animation: ssFloat 3.6s ease-in-out infinite;
+  }
+
+  @keyframes ssFloat {
+    0%, 100% { transform: translate(-50%, 0); opacity: .5; }
+    50%      { transform: translate(-50%, 7px); opacity: 1; }
+  }
+}
+
+/* 开了「减少动态效果」：不轮播、不打字、光标不闪。
+   别忘了 .hf-slide 的初值是 opacity:0，不补这条两句都会消失。 */
+@media (prefers-reduced-motion: reduce) {
+  .hf-slide:first-child {
+    opacity: 1;
+  }
+
+  .hf-caret {
+    animation: none;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   全员群像：通栏整幅铺开 + Popover 灯箱
+   （以前它是 banner，被 65vh + cover 裁得只剩中间 ~44%，连最右侧背身
+     站着的那个角色都看不见）
+   ══════════════════════════════════════════════ */
+
+/* 通栏：和开屏同一套负 margin + --bleed-* 实测变量。
+   同样依赖上面 `main:has(.wa-band){overflow:visible}` 那条。 */
+.wa-band {
+  margin-left: calc(-1 * var(--bleed-left, 0px));
+  margin-right: calc(-1 * var(--bleed-right, 0px));
+  margin-bottom: 1.5rem;
+}
+
+.wa-wrap {
+  position: relative;
+}
+
+/* 画框做成了 <button>（popovertarget 需要），所以要把 button 的默认样式全部抹掉 */
+.wa-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+  cursor: zoom-in;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-color);
+  background: var(--c-blue-tint);
+  font: inherit;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.wa-frame img {
+  display: block;
+  width: 100%;       /* 高度 auto → 2400×460 的原比例，不裁不拉伸 */
+  height: auto;
+}
+
+.wa-hint {
+  position: absolute;
+  right: .6rem;
+  bottom: .6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .3rem .6rem;
+  font-size: .7rem;
+  line-height: 1;
+  color: #fff;
+  border-radius: 999px;
+  background: rgba(8, 24, 36, .58);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.wa-frame:hover .wa-hint,
+.wa-frame:focus-visible .wa-hint {
+  opacity: 1;
+}
+
+/* ── 灯箱 ──
+   用 Popover API：popover 进的是 top layer，按规范「当作根节点的子节点」渲染，
+   所以祖先的 transform（.wa-band 的 fade-up 会留下 matrix(1,0,0,1,0,0)）
+   不会再把它困在区块里。popovertarget 是声明式的，不需要 JS。 */
+.wa-lightbox {
+  position: fixed;
+  inset: 0;
+  display: none;         /* 不支持 popover 的浏览器：退化成「只有整幅展示」，不报错 */
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 3.5vh 2vw;
+  border: 0;
+  overflow: auto;
+  cursor: zoom-out;
+  background: rgba(4, 12, 20, .93);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.wa-lightbox:popover-open {
+  display: flex;
+}
+
+/* 灯箱自己已经够暗，不需要 UA 再叠一层 backdrop */
+.wa-lightbox::backdrop {
+  background: transparent;
+}
+
+.wa-lightbox img {
+  width: auto;
+  height: auto;
+  max-width: 96vw;
+  max-height: 92vh;
+  border-radius: 8px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .6);
+}
+
+.wa-close {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.3rem;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  font-size: .95rem;
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .14);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background .2s ease;
+}
+
+.wa-close:hover {
+  background: rgba(255, 255, 255, .28);
+}
+
+.wa-cap {
+  margin: .55rem 0 0;
+  font-size: .72rem;
+  opacity: .62;
+}
+
+/* （「今日一言」卡片的样式已随卡片一并删除 —— 用户要求首页不要那张卡，
+     语录内容仍然完整保留在 /quotes/ 语录页） */
+
+/* ══════════════════════════════════════════════
+   动效（克制）
+   ══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-up {
+    animation: fadeUp .45s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .quote-card { animation: fadeUp .4s cubic-bezier(.22, .61, .36, 1) both; }
+  .quote-card:nth-child(2) { animation-delay: .04s; }
+  .quote-card:nth-child(3) { animation-delay: .08s; }
+  .quote-card:nth-child(4) { animation-delay: .12s; }
+  .quote-card:nth-child(5) { animation-delay: .16s; }
+  .quote-card:nth-child(6) { animation-delay: .2s; }
+}
+
+/* ══════════════════════════════════════════════
+   移动端
+   ══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .l2d-stage { height: 46vh; }
+
+  /* 开屏：竖屏照样整屏铺，只收紧内边距和字号。
+     底部留白给得比桌面多一点 —— 竖屏下文字行数更多，得和箭头拉开距离 */
+  .hero-full-copy { padding: 4rem 1.1rem 17vh; }
+  .hf-title { font-size: clamp(1.25rem, 6.2vw, 1.8rem); }
+  .hf-typing { letter-spacing: .12em; }
+  .hf-jp { font-size: clamp(.88rem, 4.4vw, 1.1rem); }
+  .hf-sub { font-size: clamp(.78rem, 3.4vw, .95rem); }
+  .hero-full-scroll { bottom: 1.5rem; width: 2.4rem; height: 2.4rem; }
+
+  /* 触屏没有 hover，放大提示常驻 */
+  .wa-hint { opacity: .9; }
+  .wa-cap { font-size: .68rem; }
+}

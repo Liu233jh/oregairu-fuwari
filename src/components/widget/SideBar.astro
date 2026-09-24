@@ -1,0 +1,26 @@
+---
+import type { MarkdownHeading } from "astro";
+import Categories from "./Categories.astro";
+import Profile from "./Profile.astro";
+import Tag from "./Tags.astro";
+
+interface Props {
+	class?: string;
+	headings?: MarkdownHeading[];
+}
+
+const className = Astro.props.class;
+---
+<div id="sidebar" class:list={[className, "w-full"]}>
+    <!-- id="sidebar-profile" 是给首页用的：首页开屏是全屏的，侧栏要整体
+         下移到开屏 + 群像带下面（见 custom.css 的 --home-lead），
+         靠给这一层加 margin-top 实现 —— 不能直接给 #sidebar 加，
+         那会撑高网格行、把页面拉长。 -->
+    <div id="sidebar-profile" class="flex flex-col w-full gap-4 mb-4">
+        <Profile></Profile>
+    </div>
+    <div id="sidebar-sticky" class="transition-all duration-700 flex flex-col w-full gap-4 top-4 sticky top-4">
+        <Categories class="onload-animation" style="animation-delay: 150ms"></Categories>
+        <Tag class="onload-animation" style="animation-delay: 200ms"></Tag>
+    </div>
+</div>

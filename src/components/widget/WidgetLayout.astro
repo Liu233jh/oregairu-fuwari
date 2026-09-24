@@ -1,0 +1,81 @@
+---
+import { Icon } from "astro-icon/components";
+import I18nKey from "../../i18n/i18nKey";
+import { i18n } from "../../i18n/translation";
+
+interface Props {
+	id: string;
+	name?: string;
+	isCollapsed?: boolean;
+	collapsedHeight?: string;
+	class?: string;
+	style?: string;
+}
+const { id, name, isCollapsed, collapsedHeight, style } = Astro.props;
+const className = Astro.props.class;
+---
+<widget-layout data-id={id} data-is-collapsed={String(isCollapsed)} class={"pb-4 card-base " + className} style={style}>
+    <div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2
+        before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+        before:absolute before:left-[-16px] before:top-[5.5px]">{name}</div>
+    <div id={id} class:list={["collapse-wrapper px-4 overflow-hidden", {"collapsed": isCollapsed}]}>
+        <slot></slot>
+    </div>
+    {isCollapsed && <div class="expand-btn px-4 -mb-2">
+        <button type="button" class="btn-plain rounded-lg w-full h-9" aria-expanded="false">
+            <div class="text-[var(--primary)] flex items-center justify-center gap-2 -translate-x-2">
+                <Icon name="material-symbols:more-horiz" class="expand-icon text-[1.75rem]"></Icon>
+                <!-- 两个标签靠 CSS 切换，不靠 JS 改文字：
+                     JS 万一没跑（或换页时序错位），至少还停在「更多」这个正确初值上。
+                     切换样式在 custom.css 的「侧栏 更多/收起」一节。 -->
+                <span class="expand-label-expand">{i18n(I18nKey.more)}</span>
+                <span class="expand-label-collapse">{i18n(I18nKey.collapse)}</span>
+            </div>
+        </button>
+    </div>}
+</widget-layout>
+
+<style define:vars={{ collapsedHeight }}>
+    .collapsed {
+        height: var(--collapsedHeight);
+    }
+</style>
+
+<script>
+    /**
+     * 侧栏卡片的「更多 / 收起」切换
+     *
+     * ⚠️ 两个坑：
+     *   1. 原来的实现点开之后直接 `btn.classList.add('hidden')` 把按钮藏了，
+     *      于是只能展开、没法收起（用户报的就是这个）。现在改成 toggle，
+     *      并在 host 上打 `is-expanded`，让 CSS 换标签文字。
+     *   2. 逻辑必须写在 `connectedCallback` 而不是 `constructor`：
+     *      Swup 换页时新元素由解析器创建，**构造阶段子节点还没解析出来**，
+     *      `this.querySelector('.expand-btn')` 会拿到 null。
+     */
+    class WidgetLayout extends HTMLElement {
+        connectedCallback() {
+            // 用 dataset 当「已绑定」标记，而不是 #private 字段 ——
+            // 这个标记顺便能在 DevTools 里直接看到，排查时方便。
+            if (this.dataset.bound === "true") return; // 断开再连回来时不重复绑定
+            if (this.dataset.isCollapsed !== "true") return;
+
+            const btn = this.querySelector<HTMLButtonElement>(".expand-btn button");
+            const wrapper = this.querySelector<HTMLElement>(".collapse-wrapper");
+            if (!btn || !wrapper) return;
+            this.dataset.bound = "true";
+
+            btn.addEventListener("click", () => {
+                // classList.toggle 返回 true = 这一下是「加上 collapsed」（即收起）
+                const collapsed = wrapper.classList.toggle("collapsed");
+                const expanded = !collapsed;
+                this.classList.toggle("is-expanded", expanded);
+                btn.setAttribute("aria-expanded", String(expanded));
+            });
+        }
+    }
+
+    if (!customElements.get("widget-layout")) {
+        customElements.define("widget-layout", WidgetLayout);
+    }
+</script>

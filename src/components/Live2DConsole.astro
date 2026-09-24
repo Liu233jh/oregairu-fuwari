@@ -1,0 +1,140 @@
+---
+/**
+ * Live2D 演出控制台（角色页共用组件）
+ *
+ * 雪乃和结衣的模型结构完全一致（27 个动作 / 14 个表情 / 3 个姿态），
+ * 所以 UI 也共用一份，只按 character 取不同的模型路径与文案。
+ *
+ * 舞台元素上的 data-character 会被 live2d-page.ts 读取，
+ * 决定加载哪个角色的模型 —— 这是两个角色能共用同一套逻辑的关键。
+ */
+import { Icon } from "astro-icon/components";
+import {
+	ACTION_GROUPS,
+	ACTION_NAMES,
+	EXPRESSIONS,
+	LIVE2D_CHARACTERS,
+	POSE_DESC,
+	type Live2DCharacterKey,
+} from "../scripts/live2d-model-info";
+
+interface Props {
+	character: Live2DCharacterKey;
+	initialStatus?: string;
+}
+
+const { character: key, initialStatus = "把指针移到她身边，看看她的反应" } = Astro.props;
+const ch = LIVE2D_CHARACTERS[key];
+
+// 把角色印象色注入 CSS 变量（雪乃蓝 / 结衣粉 / 一色黄）
+const themeVars = [
+	`--c-char:${ch.theme.accent}`,
+	`--c-char-dark:${ch.theme.accentDark}`,
+	`--c-char-soft:${ch.theme.accentSoft}`,
+	`--stage-from:${ch.theme.stageFrom}`,
+	`--stage-mid:${ch.theme.stageMid}`,
+	`--stage-to:${ch.theme.stageTo}`,
+	`--stage-dark-from:${ch.theme.stageDarkFrom}`,
+	`--stage-dark-to:${ch.theme.stageDarkTo}`,
+	`--stage-glow:${ch.theme.glow}`,
+].join(";");
+
+const poseActions = [...ACTION_GROUPS.pose];
+const effectActions = [...ACTION_GROUPS.effect];
+const mainActions = [...ACTION_GROUPS.main];
+const transitionActions = [...ACTION_GROUPS.transition];
+---
+
+<div class="l2d-console" style={themeVars}>
+
+<!-- ══ Live2D 舞台 ══ -->
+<!-- 舞台比画布矮、画布顶部对齐：这样卡片能露出来一截，但人物大小不变 -->
+<div class="l2d-stage mb-3" id="l2d-stage" data-character={key}>
+	<canvas id="l2d-canvas"></canvas>
+	<div id="l2d-loading" class="absolute inset-0 flex items-center justify-center text-sm" style="color:var(--c-char-dark)">
+		<div class="text-center px-6">
+			<div class="animate-pulse mb-2">正在唤醒{ch.shortName}…</div>
+			<div id="l2d-hint" class="text-xs opacity-75">正在准备…</div>
+		</div>
+	</div>
+</div>
+<p class="text-center text-xs text-50 mb-4">
+	<span id="l2d-status">{initialStatus}</span>
+</p>
+
+<!-- ══ 演出控制 ══ -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+	<div class="l2d-panel">
+		<h3><Icon name="fa6-solid:shirt" class="mr-1" />服装</h3>
+		<div class="chip-row" id="outfit-row">
+			{ch.outfits.map((o, i) => (
+				<button class={`pill-btn${i === 0 ? " active" : ""}`} data-outfit={o.key}>{o.label}</button>
+			))}
+		</div>
+
+		<h3 class="mt-4"><Icon name="fa6-solid:person" class="mr-1" />姿态 <span class="text-xs opacity-70 font-normal">（常驻，切换后一直保持）</span></h3>
+		<div class="chip-row" id="pose-row">
+			{poseActions.map((i, n) => (
+				<button class="pill-btn" data-actionidx={i} title={`Action[${i}] ${ACTION_NAMES[i]} · ${POSE_DESC[n]}`}>
+					姿态{["一", "二", "三"][n]} · {POSE_DESC[n]}
+				</button>
+			))}
+		</div>
+
+		<h3 class="mt-4"><Icon name="fa6-solid:gear" class="mr-1" />互动演示</h3>
+		<label class="flex items-center gap-2 text-sm cursor-pointer text-90 mb-2">
+			<input type="checkbox" id="opt-follow" checked class="accent-[var(--c-pink)]" />
+			目光跟随鼠标
+		</label>
+		<label class="flex items-center gap-2 text-sm cursor-pointer text-90">
+			<input type="checkbox" id="opt-speak" class="accent-[var(--c-pink)]" />
+			模拟说话（口型动画，无声音）
+		</label>
+	</div>
+
+	<div class="l2d-panel">
+		<h3><Icon name="fa6-solid:face-smile" class="mr-1" />表情 <span class="text-xs opacity-70 font-normal">（14 个）</span></h3>
+		<div class="chip-row" id="expr-row">
+			{EXPRESSIONS.map((name, i) => (
+				<button class="pill-btn" data-expr={i} title={`${key}_em${i}`}>{name}</button>
+			))}
+		</div>
+
+		<h3 class="mt-4">
+			<Icon name="fa6-solid:wand-sparkles" class="mr-1" />特效动作
+			<span class="text-xs opacity-70 font-normal">（再点一次关闭）</span>
+		</h3>
+		<div class="chip-row" id="effect-row">
+			{effectActions.map((i) => (
+				<button class="pill-btn" data-actionidx={i} title="再点一次关闭">{ACTION_NAMES[i]}</button>
+			))}
+		</div>
+	</div>
+</div>
+
+<!-- ══ 主动作 ══ -->
+<div class="l2d-panel mb-4">
+	<h3>
+		<Icon name="fa6-solid:person-running" class="mr-1" />主动作
+		<span class="text-xs opacity-70 font-normal">（12 个，数字=动作编号，字母=所属姿态）</span>
+	</h3>
+	<div class="chip-row" id="motion-row">
+		{mainActions.map((i) => (
+			<button class="pill-btn" data-actionidx={i} title={`Action[${i}]`}>{ACTION_NAMES[i]}</button>
+		))}
+	</div>
+</div>
+
+<!-- ══ 姿态过渡 ══ -->
+<div class="l2d-panel mb-8">
+	<h3>
+		<Icon name="fa6-solid:right-left" class="mr-1" />姿态过渡
+		<span class="text-xs opacity-70 font-normal">（需要先处于起始姿态，否则按钮不可点）</span>
+	</h3>
+	<div class="chip-row" id="transition-row">
+		{transitionActions.map((i) => (
+			<button class="pill-btn" data-actionidx={i}>{ACTION_NAMES[i]}</button>
+		))}
+	</div>
+</div>
+</div>

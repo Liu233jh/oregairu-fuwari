@@ -1,0 +1,118 @@
+---
+import { url } from "../utils/url-utils";
+import { getCollection } from "astro:content";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import Live2DConsole from "../components/Live2DConsole.astro";
+import { pickTopQuotes, countQuotes, countStrongQuotes } from "../scripts/quote-pick";
+import { LIVE2D_CHARACTERS } from "../scripts/live2d-model-info";
+
+// 角色印象色（雪乃蓝 / 结衣粉 / 一色黄）注入成 CSS 变量，供头部标签使用
+const chTheme = LIVE2D_CHARACTERS.iroha.theme;
+const charThemeVars = [
+	`--c-char:${chTheme.accent}`,
+	`--c-char-dark:${chTheme.accentDark}`,
+	`--c-char-soft:${chTheme.accentSoft}`,
+].join(";");
+
+const quotes = await getCollection("quotes");
+const irohaQuotes = pickTopQuotes(quotes, "iroha", 6);
+const irohaTotal = countQuotes(quotes, "iroha");
+// 「她说」只显示达到金句门槛的（人工精选 / 网络核实 / 萌娘语录段）
+const irohaStrong = countStrongQuotes(quotes, "iroha");
+
+const PROFILE = [
+	["姓名", "一色彩羽（一色 いろは）"],
+	["罗马音", "Isshiki Iroha"],
+	["年级", "总武高中 一年级"],
+	["社团", "学生会（会长）"],
+	["生日", "4 月 16 日"],
+	["家庭成员", "父、母、哥哥"],
+	["爱好", "足球（原足球部经理）、撒娇、被夸奖"],
+	["外号", "一色 / 伊吕波 / 小恶魔"],
+	["性格", "表面乖巧 / 实则算计 / 极擅长顺势而为 / 意外的行动力"],
+];
+---
+
+<MainGridLayout title="一色彩羽" description="一色彩羽 · Live2D 角色页">
+	<div class="mb-6 flex items-end justify-between flex-wrap gap-3">
+		<div>
+			<h1 class="text-3xl font-bold mb-1">一色彩羽</h1>
+			<p class="text-90 text-sm">一色 いろは · Isshiki Iroha</p>
+		</div>
+		<div class="flex gap-2 text-xs items-center flex-wrap" style={charThemeVars}>
+			<span class="char-chip">学生会</span>
+			<span class="char-chip is-plain">一年级</span>
+			<span class="char-chip is-plain">小恶魔</span>
+			<a href={url("/character/")} class="pill-btn char-link no-underline">雪之下雪乃 →</a>
+			<a href={url("/yui/")} class="pill-btn char-link no-underline">由比滨结衣 →</a>
+		</div>
+	</div>
+
+	<Live2DConsole character="iroha" />
+
+	<!-- ══ 资料 ══ -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+		<div class="card-base p-5">
+			<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+				<Icon name="fa6-solid:id-card" class="text-[var(--c-blue)]" /> 角色资料
+			</h2>
+			<dl class="text-sm">
+				{PROFILE.map(([k, v]) => (
+					<div class="flex gap-3 py-2 border-b border-[var(--line-divider)] last:border-0">
+						<dt class="w-20 shrink-0 text-50">{k}</dt>
+						<dd class="flex-1 text-90">{v}</dd>
+					</div>
+				))}
+			</dl>
+		</div>
+
+		<div class="card-base p-5">
+			<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+				<Icon name="fa6-solid:heart" class="text-[var(--c-pink)]" /> 性格分析
+			</h2>
+			<div class="space-y-3 text-sm leading-relaxed text-90">
+				<p><strong class="text-[var(--c-pink-dark)]">装乖的高手</strong> —— 一色很清楚「可爱的一年级学妹」这个身份有多好用。她会主动把这个角色演到底，而且演得比谁都像。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">精于算计</strong> —— 全作最擅长「顺势而为」的人。她不会正面请求，而是把局面推到对方非答应不可的位置。八幡被她套路过不止一次。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">意外的行动力</strong> —— 学生会会长的位置不是被推上去的，是她自己算准了时机接下来的。看起来被动，实际每一步都有目的。</p>
+				<p><strong class="text-[var(--c-pink-dark)]">傲娇的第三种形态</strong> —— 雪乃是「嘴硬心软」，结衣是「嘴软心也软」，而一色是**嘴上顺着你，心里早就算好了**。</p>
+				<p><strong class="text-[var(--c-blue-deep)]">对八幡的态度</strong> —— 她大概是全作唯一敢直接叫八幡「前辈」还顺手利用他的人。敬而远之，又确实有点在意。</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- ══ 一色语录 ══ -->
+	<div class="mb-8">
+		<h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+			<Icon name="fa6-solid:quote-left" class="text-[var(--c-pink)]" /> 她说
+			<span class="text-xs font-normal text-50">（{ irohaQuotes.length > 0 ? `${irohaQuotes.length} 句金句` : "暂无" } · 库里共 {irohaTotal} 条）</span>
+			<a href={url("/quotes/?char=iroha")} class="text-xs font-normal link-underline text-50 ml-auto">查看全部 →</a>
+		</h2>
+		{irohaQuotes.length > 0 ? (
+			<div class="quote-grid">
+				{irohaQuotes.map((q) => (
+					<blockquote class="quote-card" data-char="iroha">
+						<p>「{q.data.text}」</p>
+						<footer>
+							<span class="q-char">—— 一色彩羽</span>
+						</footer>
+					</blockquote>
+				))}
+			</div>
+		) : (
+			<p class="text-sm text-50">语录库里还没有归到一色名下的句子。</p>
+		)}
+	</div>
+
+	<div class="text-center text-xs text-50 leading-relaxed pb-4">
+		<p>Live2D 模型来自本地春物角色素材包，仅供个人学习研究使用。</p>
+		<p class="mt-1">渲染：PixiJS 6 + pixi-live2d-display + Live2D Cubism 4 Core</p>
+		<p class="mt-1">参数与动作清单对齐原始 Windows 版桌面程序 · 27 个动作 / 14 个表情 / 3 个姿态</p>
+	</div>
+</MainGridLayout>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     与雪乃/结衣共用 src/scripts/live2d-page.ts：
+     舞台元素上的 data-character="iroha" 决定加载 /live2d/models/iroha/
+     注意一色的闭眼锁表情是 [1, 7, 13]（雪乃是 [9]，结衣没有）
+     ═══════════════════════════════════════════════════════════════ -->

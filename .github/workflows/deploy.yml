@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.14.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+
+      - name: Show build output
+        run: |
+          du -sh dist/client
+          find dist/client -maxdepth 1 -type d | sort
+
+      # 注意 publish_dir 是 dist/client 而不是 dist ——
+      # 因为装了 @astrojs/node adapter，产物分成 dist/client（静态）+ dist/server（SSR）。
+      # 静态托管只需要前者。
+      # peaceiris 默认写 .nojekyll（enable_jekyll 默认 false），
+      # 这对本站是必须的：_astro 目录以下划线开头，Jekyll 会直接忽略它。
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/client
+          force_orphan: true
