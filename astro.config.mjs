@@ -29,14 +29,18 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
+import { rehypeBaseLinks } from "./src/plugins/rehype-base-links.mjs";
+
+// 部署版的 base —— site 与 base 必须成对出现，改仓库名时两处一起改。
+const BASE = "/oregairu-fuwari/";
 
 // https://astro.build/config
 export default defineConfig({
 	// ── 部署版：GitHub Pages 项目页 ──
 	// site 必须和 base 一起改，否则 RSS / sitemap / robots 里的绝对 URL 是错的。
-	// 仓库改名的话这两行要同步改。
+	// 仓库改名的话这两行要同步改（BASE 常量定义在文件顶部，rehype 插件也在用）。
 	site: "https://liu233jh.github.io/oregairu-fuwari/",
-	base: "/oregairu-fuwari/",
+	base: BASE,
 	// fuwari 原本是 "always"，但那会让 Keystatic 的 API 路由
 	// /api/keystatic/[...params] 只匹配带结尾斜杠的形式，
 	// 而 Keystatic 客户端请求的是 /api/keystatic/tree（无斜杠）→ 404、后台读不到内容；
@@ -144,6 +148,10 @@ export default defineConfig({
 		rehypePlugins: [
 			rehypeKatex,
 			rehypeSlug,
+			// 给 Markdown 正文里写死的根路径链接（[核心概念](/posts/core-concepts/)）
+			// 补上 base 前缀。Astro 只重写它自己生成的 URL，不管 Markdown 里的，
+			// 所以部署到项目页后这些链接会 404。见 src/plugins/rehype-base-links.mjs
+			[rehypeBaseLinks, { base: BASE }],
 			[
 				rehypeComponents,
 				{

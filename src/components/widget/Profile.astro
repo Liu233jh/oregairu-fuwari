@@ -23,12 +23,22 @@ const config = profileConfig;
         <div class="h-1 w-5 bg-[var(--primary)] mx-auto rounded-full mb-2 transition"></div>
         <div class="text-center text-neutral-400 mb-2.5 transition">{config.bio}</div>
         <div class="flex flex-wrap gap-2 justify-center mb-1">
+            {/*
+              ⚠️ 原来这里写的是 href={item.url}，**没走 url()**。
+                 部署到 GitHub Pages 项目页（有 base）之后，配置里那两个站内链接
+                （/quotes/、/character/）就会指向站点根 → 404。
+                 外链（如 B 站）要保持原样，所以只对以单个 / 开头的做前缀。
+            */}
             {config.links.length > 1 && config.links.map(item =>
-                    <a rel="me" aria-label={item.name} href={item.url} target="_blank" class="btn-regular rounded-lg h-10 w-10 active:scale-90">
+                    <a rel="me" aria-label={item.name}
+                       href={item.url.startsWith('/') && !item.url.startsWith('//') ? url(item.url) : item.url}
+                       target="_blank" class="btn-regular rounded-lg h-10 w-10 active:scale-90">
                         <Icon name={item.icon} class="text-[1.5rem]"></Icon>
                     </a>
             )}
-            {config.links.length == 1 && <a rel="me" aria-label={config.links[0].name} href={config.links[0].url} target="_blank"
+            {config.links.length == 1 && <a rel="me" aria-label={config.links[0].name}
+                                            href={config.links[0].url.startsWith('/') && !config.links[0].url.startsWith('//') ? url(config.links[0].url) : config.links[0].url}
+                                            target="_blank"
                                             class="btn-regular rounded-lg h-10 gap-2 px-3 font-bold active:scale-95">
                 <Icon name={config.links[0].icon} class="text-[1.5rem]"></Icon>
                 {config.links[0].name}
