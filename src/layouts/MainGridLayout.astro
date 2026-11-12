@@ -95,21 +95,6 @@ const mainPanelTop = siteConfig.banner.enable
                 </div>
             </main>
 
-            <!-- 首帧预测量：在 HTML 解析阶段就把 --home-lead 写进去，不等模块脚本下载执行。
-                 群像图带 width/height，浏览器已按比例预留高度，所以图片没下完也能算准。
-                 这里只处理首次加载；Swup 软导航和窗口缩放由 page-bleed.ts 负责。 -->
-            <script is:inline>
-              (function () {
-                var main = document.getElementById("swup-container");
-                if (!main || !main.querySelector(".hero-full")) return;
-                if (!window.matchMedia("(min-width: 1024px)").matches) return;
-                var band = main.querySelector(".wa-band");
-                var rect = main.getBoundingClientRect();
-                var lead = Math.round((band ? band.getBoundingClientRect().bottom : rect.top) - rect.top);
-                if (lead > 0) document.documentElement.style.setProperty("--home-lead", lead + "px");
-              })();
-            </script>
-
             <div class="footer col-span-2 onload-animation block lg:hidden">
                 <Footer></Footer>
             </div>
