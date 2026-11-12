@@ -20,7 +20,7 @@ const len = page.data.length;
 const isFirstPage = page.currentPage === 1;
 ---
 
-<MainGridLayout wideHero={isFirstPage}>
+<MainGridLayout>
     {isFirstPage && <HomeHero />}
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>

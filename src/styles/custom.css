@@ -627,17 +627,12 @@ main#swup-container:has(.wa-band) {
    本来就排在 main 之后（已经在开屏和群像带下面了），
    再叠一次 --home-lead 会凭空多出一大段空白。
    1024px 对齐 fuwari 自己用的 lg: 前缀。 */
-/* has-hero 是构建期写在 #main-grid 上的标记（首页分页第一页），
-   首帧就命中，不依赖 :has() —— 慢网络下渐进解析时，
-   首帧可能画在开屏元素还没解析出来之前，:has() 兜不住那个瞬间。 */
-@media (min-width: 1024px) {
-  #main-grid.has-hero #sidebar-profile {
-    margin-top: var(--home-lead, calc(100vh + 19.17vw - var(--main-panel-top, 5.5rem) + 1rem));
-    margin-top: var(--home-lead, calc(100svh + 19.17vw - var(--main-panel-top, 5.5rem) + 1rem));
-  }
-}
 @media (min-width: 1024px) {
   #main-grid:has(.hero-full) #sidebar-profile {
+    /* 首帧兜底：--home-lead 要等 JS 实测才拿得到，脚本没跑之前先自己算一个。
+       群像带宽 2400、高 460，且通过 bleed 拉满视口宽度，所以高度约 19.17vw；
+       按「一屏 + 群像带高度」落位，脚本没跑时也不会压到图上。
+       +1rem 是给滚动条和取整留的安全余量；100vh 给不支持 svh 的浏览器兜底。 */
     margin-top: var(--home-lead, calc(100vh + 19.17vw - var(--main-panel-top, 5.5rem) + 1rem));
     margin-top: var(--home-lead, calc(100svh + 19.17vw - var(--main-panel-top, 5.5rem) + 1rem));
   }
