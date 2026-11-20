@@ -34,36 +34,6 @@ import { rehypeBaseLinks } from "./src/plugins/rehype-base-links.mjs";
 // 部署版的 base —— site 与 base 必须成对出现，改仓库名时两处一起改。
 const BASE = "/oregairu-fuwari/";
 
-// jsDelivr CDN 提速：构建完成后把 dist/client 里对 _astro 静态资源的根相对引用
-// 改写为 jsDelivr 地址（@gh-pages 分支）。_astro 文件名是内容哈希：文件不变则哈希
-// 不变，jsDelivr 缓存永久命中；文件更新则哈希变新路径（冷路径实时回源），无断链风险。
-// HTML 页面本体仍由 GitHub Pages / Render 提供（jsDelivr 对 .html 返回 text/plain）。
-// 实测（2026-11-18，温州网络）：单文件 jsDelivr 1.9s vs GitHub Pages 16.6s。
-import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
-
-const jsdelivrCdnRewrite = () => ({
-	name: "jsdelivr-cdn-rewrite",
-	hooks: {
-		// astro:build:done 在全部页面（含预渲染 HTML）写盘后触发，此时改写才完整。
-		"astro:build:done": () => {
-			const outDir = fileURLToPath(new URL("./dist/client", import.meta.url));
-			const CDN = "https://fastly.jsdelivr.net/gh/Liu233jh/oregairu-fuwari@gh-pages/_astro/";
-			const walk = (dir) => {
-				for (const name of readdirSync(dir)) {
-					const p = `${dir}/${name}`;
-					if (statSync(p).isDirectory()) walk(p);
-					else if (/\.(html|css|js)$/.test(name)) {
-						const content = readFileSync(p, "utf8");
-						const rewritten = content.replaceAll("/oregairu-fuwari/_astro/", CDN);
-						if (rewritten !== content) writeFileSync(p, rewritten);
-					}
-				}
-			};
-			walk(outDir);
-		},
-	},
-});
-
 // https://astro.build/config
 export default defineConfig({
 	// ── 部署版：GitHub Pages 项目页 ──
@@ -89,7 +59,6 @@ export default defineConfig({
 	output: "static",
 	adapter: node({ mode: "standalone" }),
 	integrations: [
-		jsdelivrCdnRewrite(),
 		tailwind({
 			nesting: true,
 		}),
