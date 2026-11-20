@@ -1,10 +1,4 @@
-/**
- * Live2D 资源走 jsDelivr CDN（@main 分支 public 目录：文件名无哈希、不常变，缓存失效风险可控）。
- * 实测（2026-11-18 温州网络）：单文件 jsDelivr 1.9s vs GitHub Pages 16.6s。
- * 更换模型文件后需清缓存：
- * curl "https://purge.jsdelivr.net/gh/Liu233jh/oregairu-fuwari@main/public/live2d/<路径>"
- */
-const LIVE2D_CDN_BASE = "https://fastly.jsdelivr.net/gh/Liu233jh/oregairu-fuwari@main/public";
+import { url } from "../utils/url-utils";
 /**
  * Live2D 模型的静态信息（雪之下雪乃 / 由比滨结衣 共用一套结构）
  *
@@ -76,10 +70,10 @@ export const LIVE2D_CHARACTERS: Record<Live2DCharacterKey, Live2DCharacter> = {
 		key: "yukino",
 		name: "雪之下雪乃",
 		shortName: "雪乃",
-		base: `${LIVE2D_CDN_BASE}/live2d/models/yukino/`,
+		base: url("/live2d/models/yukino/"),
 		models: {
-			seihuku: `${LIVE2D_CDN_BASE}/live2d/models/yukino/yukino_seihuku.model3.json`,
-			shihuku: `${LIVE2D_CDN_BASE}/live2d/models/yukino/yukino_shihuku.model3.json`,
+			seihuku: url("/live2d/models/yukino/yukino_seihuku.model3.json"),
+			shihuku: url("/live2d/models/yukino/yukino_shihuku.model3.json"),
 		},
 		outfits: [
 			{ key: "seihuku", label: "制服" },
@@ -103,10 +97,10 @@ export const LIVE2D_CHARACTERS: Record<Live2DCharacterKey, Live2DCharacter> = {
 		key: "yui",
 		name: "由比滨结衣",
 		shortName: "结衣",
-		base: `${LIVE2D_CDN_BASE}/live2d/models/yui/`,
+		base: url("/live2d/models/yui/"),
 		models: {
-			seihuku: `${LIVE2D_CDN_BASE}/live2d/models/yui/yui_seihuku.model3.json`,
-			shihuku: `${LIVE2D_CDN_BASE}/live2d/models/yui/yui_shihuku.model3.json`,
+			seihuku: url("/live2d/models/yui/yui_seihuku.model3.json"),
+			shihuku: url("/live2d/models/yui/yui_shihuku.model3.json"),
 		},
 		outfits: [
 			{ key: "seihuku", label: "制服" },
@@ -130,10 +124,10 @@ export const LIVE2D_CHARACTERS: Record<Live2DCharacterKey, Live2DCharacter> = {
 		key: "iroha",
 		name: "一色彩羽",
 		shortName: "一色",
-		base: `${LIVE2D_CDN_BASE}/live2d/models/iroha/`,
+		base: url("/live2d/models/iroha/"),
 		models: {
-			seihuku: `${LIVE2D_CDN_BASE}/live2d/models/iroha/iroha_seihuku.model3.json`,
-			shihuku: `${LIVE2D_CDN_BASE}/live2d/models/iroha/iroha_shihuku.model3.json`,
+			seihuku: url("/live2d/models/iroha/iroha_seihuku.model3.json"),
+			shihuku: url("/live2d/models/iroha/iroha_shihuku.model3.json"),
 		},
 		outfits: [
 			{ key: "seihuku", label: "制服" },
@@ -353,7 +347,7 @@ export const MOUTH_PARAM = "PARAM_MOUTH_OPEN_Y";
 
 /** 动态加载 Live2D 运行时的顺序，不可变：core 必须在 cubism4 之前 */
 export const RUNTIME_SCRIPTS = [
-	`${LIVE2D_CDN_BASE}/live2d/runtime/pixi.min.js`,
-	`${LIVE2D_CDN_BASE}/live2d/runtime/live2dcubismcore.min.js`,
-	`${LIVE2D_CDN_BASE}/live2d/runtime/cubism4.min.js`,
+	url("/live2d/runtime/pixi.min.js"),
+	url("/live2d/runtime/live2dcubismcore.min.js"),
+	url("/live2d/runtime/cubism4.min.js"),
 ] as const;
